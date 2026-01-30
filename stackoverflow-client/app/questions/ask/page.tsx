@@ -1,15 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
 import { useAppDispatch, useAppSelector } from "@/app/hooks/hooks";
-
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import {
   TextField,
   Button,
@@ -18,60 +15,54 @@ import {
   Card,
   Snackbar,
   Alert,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  Chip,
+  Stack,
+  CircularProgress,
 } from "@mui/material";
-
+import { fetchTags } from "../../redux/tags/tagSlice";
+import { addQuestion } from "@/app/redux/questions/questionSlice";
 import "./ask.css";
 
-const AskQuestion = z.object({
-  title: z
-    .string()
-    .min(15, "title must contain 15 charcters min")
-    .max(55, "question title can not exceed 55 characters"),
-  description: z
-    .string()
-    .max(2000, "descriptioon of question can not exceed 2000 cgaracters"),
+const AskQuestionSchema = z.object({
+  title: z.string().min(15).max(55),
+  description: z.string().max(2000),
+  tags: z.array(z.string()).min(1),
+  type: z.enum(["draft", "public"]),
 });
 
-type AskQuestionData = z.infer<typeof AskQuestion>;
+type AskQuestionData = z.infer<typeof AskQuestionSchema>;
 
-export default function AddProduct() {
+export default function AskQuestion() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-
   const currentUser = useAppSelector(
     (state) => state.authenticator.currentUser,
   );
-
+  const { tags, loading } = useAppSelector((state) => state.tags);
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-
+  const [tagOpen, setTagOpen] = useState(false);
   const {
     control,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<AskQuestionData>({
-    resolver: zodResolver(AskQuestion),
-    defaultValues: {
-      title: "",
-      description: "",
-    },
+    resolver: zodResolver(AskQuestionSchema),
+    defaultValues: { title: "", description: "", tags: [], type: "draft" },
   });
 
-  const handleSaveQuestion = (data: AskQuestionData) => {
-    const formData = new FormData();
+  useEffect(() => {
+    dispatch(fetchTags());
+  }, [dispatch]);
 
-    formData.append("productname", data.title);
-    formData.append("description", data.description);
-
-    // dispatch(addProduct(formData));
-
+  const onSubmit = (data: AskQuestionData) => {
+    const payload = { ...data, userid: currentUser?.userid };
+    dispatch(addQuestion(payload));
     setOpenSnackbar(true);
-
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 1200);
+    setTimeout(() => router.push("/questions"), 1200);
   };
 
   return (
@@ -82,21 +73,18 @@ export default function AddProduct() {
             Ask Your Question
           </Typography>
 
-          <Box
-            component="form"
-            onSubmit={handleSubmit(handleSaveQuestion)}
-            className="add-product-form"
-          >
+          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
             <Controller
               name="title"
               control={control}
               render={({ field }) => (
                 <TextField
                   {...field}
-                  value={field.value ?? ""}
-                  label="Product Name"
+                  label="Question Title"
                   error={!!errors.title}
                   helperText={errors.title?.message}
+                  fullWidth
+                  margin="normal"
                 />
               )}
             />
@@ -107,21 +95,95 @@ export default function AddProduct() {
               render={({ field }) => (
                 <TextField
                   {...field}
-                  value={field.value ?? ""}
-                  label="Description"
+                  label="Question Description"
                   multiline
-                  rows={10}
+                  rows={8}
+                  error={!!errors.description}
+                  helperText={errors.description?.message}
+                  fullWidth
+                  margin="normal"
                 />
               )}
             />
 
-            <Button variant="contained" type="submit" fullWidth>
-              Save Question
-            </Button>
+            <Controller
+              name="tags"
+              control={control}
+              render={({ field }) => (
+                <FormControl fullWidth margin="normal" error={!!errors.tags}>
+                  <InputLabel>Tags</InputLabel>
+
+                  {loading ? (
+                    <Box display="flex" justifyContent="center" p={2}>
+                      <CircularProgress size={22} />
+                    </Box>
+                  ) : (
+                    <Select
+                      {...field}
+                      multiple
+                      open={tagOpen}
+                      onOpen={() => setTagOpen(true)}
+                      onClose={() => setTagOpen(false)}
+                      label="Tags"
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            maxHeight: 240,
+                          },
+                        },
+                      }}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setTagOpen(false);
+                      }}
+                      renderValue={(selected) => (
+                        <Stack direction="row" spacing={1} flexWrap="wrap">
+                          {selected.map((value) => (
+                            <Chip key={value} label={value} />
+                          ))}
+                        </Stack>
+                      )}
+                    >
+                      {tags.map((tag: any) => (
+                        <MenuItem key={tag.id} value={tag.tagName}>
+                          {tag.tagName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+
+                  <Typography variant="caption" color="error">
+                    {errors.tags?.message}
+                  </Typography>
+                </FormControl>
+              )}
+            />
+
+            <Stack direction="row" spacing={2} mt={2}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={handleSubmit((data) =>
+                  onSubmit({ ...data, type: "draft" }),
+                )}
+              >
+                Save Draft
+              </Button>
+
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleSubmit((data) =>
+                  onSubmit({ ...data, type: "public" }),
+                )}
+              >
+                Ask Public
+              </Button>
+            </Stack>
           </Box>
 
-          <Typography variant="body2" align="center" className="back-link">
-            Back to Questions Page? <Link href="/questions">Dashboard</Link>
+          <Typography align="center" mt={2}>
+            Back to <Link href="/questions">Questions</Link>
           </Typography>
         </Card>
       </div>
@@ -131,7 +193,7 @@ export default function AddProduct() {
         autoHideDuration={2000}
         onClose={() => setOpenSnackbar(false)}
       >
-        <Alert severity="success">Product successfully added 🎉</Alert>
+        <Alert severity="success">Question submitted successfully 🚀</Alert>
       </Snackbar>
     </>
   );

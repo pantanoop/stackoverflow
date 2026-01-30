@@ -5,8 +5,8 @@ export class Tag {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
-  tagId: number;
+  @Column({ type: 'bigint', unique: true })
+  tagId: bigint;
 
   @Column({ unique: true, nullable: false })
   tagName: string;

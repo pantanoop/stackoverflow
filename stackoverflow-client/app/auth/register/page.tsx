@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
 import { registerUser } from "../../redux/auth/authenticateSlice";
 
 import { Link as MuiLink } from "@mui/material";
@@ -32,8 +31,6 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import GoogleIcon from "@mui/icons-material/Google";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import firebase from "firebase/compat/app";
-// import { RootState } from "../redux/store";
 
 const RegistrationSchema = z
   .object({
@@ -82,6 +79,7 @@ function Register() {
   const handleRegister = async (data: RegistrationSchemaType) => {
     try {
       const userData = {
+        userid: Date.now().toLocaleString(),
         email: data.email,
         username: data.username,
       };
@@ -96,9 +94,9 @@ function Register() {
           data.password,
         );
         const user = res.user;
-        console.log(res, "response from register email firebase");
+        console.log(user, "response from register email firebase");
         setOpenSnackbar(true);
-        setTimeout(() => router.push("/dashboard"), 1200);
+        setTimeout(() => router.push("/questions"), 1200);
       }
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
@@ -118,13 +116,15 @@ function Register() {
       const user = res.user;
       console.log(user, "social auth");
       const userData = {
+        userid: user.uid,
         email: user.email,
         username: user.displayName,
       };
       dispatch(registerUser(userData));
+      console.log(currentUser);
       if (currentUser) {
         setOpenSnackbar(true);
-        setTimeout(() => router.push("/dashboard"), 1200);
+        setTimeout(() => router.push("/questions"), 1200);
       }
       // if (!currentUser) {
       //   const user = firebase.auth().currentUser;

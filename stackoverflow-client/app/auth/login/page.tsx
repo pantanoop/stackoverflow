@@ -1,19 +1,14 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
+
 import { Link as MuiLink } from "@mui/material";
 import {
   addCurrentUser,
   googleLogin,
 } from "@/app/redux/auth/authenticateSlice";
 
-import {
-  auth,
-  googleProvider,
-  githubProvider,
-  db,
-} from "../../config/firebase";
+import { auth, googleProvider, githubProvider } from "../../config/firebase";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 
 import { useForm, Controller } from "react-hook-form";
@@ -37,7 +32,7 @@ import GoogleIcon from "@mui/icons-material/Google";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { RootState } from "../../redux/store";
+
 import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
 
 const LoginSchema = z.object({
@@ -77,13 +72,16 @@ function Login() {
       const user = res.user;
       console.log(user);
       const userData = {
+        userid: user.uid ?? Date.now().toLocaleString(),
         email: user.email,
         username: user.displayName,
       };
+      console.log(currentUser);
       dispatch(addCurrentUser(userData));
+
       if (currentUser) {
         setOpenSnackbar(true);
-        setTimeout(() => router.push("/dashboard"), 1000);
+        setTimeout(() => router.push("/questions"), 1000);
       }
     } catch (error: any) {
       handleAuthError(error);
@@ -96,15 +94,16 @@ function Login() {
       const user = res.user;
 
       const userData = {
+        userid: user.uid,
         email: user.email,
         username: user.displayName,
       };
 
       dispatch(googleLogin(userData));
-
+      console.log(currentUser);
       if (currentUser) {
         setOpenSnackbar(true);
-        setTimeout(() => router.push("/dashboard"), 1000);
+        setTimeout(() => router.push("/questions"), 1000);
       }
     } catch (error) {
       console.error("Social login failed", error);

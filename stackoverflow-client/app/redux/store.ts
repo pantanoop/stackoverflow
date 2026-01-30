@@ -1,5 +1,7 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import authReducer from "../redux/auth/authenticateSlice";
+import tagReducer from "../redux/tags/tagSlice";
+import questionReducer from "./questions/questionSlice";
 
 import {
   persistStore,
@@ -16,13 +18,15 @@ import storage from "redux-persist/lib/storage"; // defaults to localStorage for
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["authenticator"],
+  whitelist: ["authenticator", "questions"],
 };
 
 const persistedReducer = persistReducer(
   persistConfig,
   combineReducers({
     authenticator: authReducer,
+    tags: tagReducer,
+    questions: questionReducer,
   }),
 );
 

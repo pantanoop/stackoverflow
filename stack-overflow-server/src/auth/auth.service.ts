@@ -1,6 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateAuthDto } from './dto/create-auth.dto';
 
 import { User } from './entities/user.entity';
@@ -13,7 +13,7 @@ export class AuthService {
   ) {}
 
   async createUser(createAuthDto: CreateAuthDto) {
-    const { username, email } = createAuthDto;
+    const { username, email, userid } = createAuthDto;
 
     const existingEmail = await this.userRepository.findOne({
       where: { email },
@@ -30,8 +30,8 @@ export class AuthService {
     if (existingUsername) {
       throw new HttpException({ message: 'Username already in use' }, 400);
     }
-
     const newUser = this.userRepository.create({
+      userid,
       username,
       email,
     });
@@ -42,14 +42,17 @@ export class AuthService {
   }
 
   async signInWithGoogle(userGoogleDto: CreateAuthDto) {
-    const { email, username } = userGoogleDto;
-
+    const { email, userid } = userGoogleDto;
     let user = await this.userRepository.findOne({
       where: { email },
     });
 
     if (!user) {
-      user = this.userRepository.create({ ...userGoogleDto });
+      user = this.userRepository.create({
+        email,
+        userid,
+        username: userGoogleDto.username,
+      });
       await this.userRepository.save(user);
     }
     return user;

@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { createUser, googlesignin } from "./service/authApi";
 
 export type User = {
+  userid?: string;
   email: string | null;
   username?: string | null;
 };
@@ -48,14 +49,11 @@ const authenticateSlice = createSlice({
   name: "authenticate",
   initialState,
   reducers: {
-    // logout: (state) => {
-    //   state.currentUser = null;
-    // },
+    logout: (state) => {
+      state.currentUser = null;
+    },
     addCurrentUser: (state, action: PayloadAction<User>) => {
       state.currentUser = action.payload;
-    },
-    removeCurrentUser: (state) => {
-      state.currentUser = null;
     },
   },
   extraReducers: (builder) => {
@@ -98,5 +96,5 @@ const authenticateSlice = createSlice({
   },
 });
 
-export const { addCurrentUser, removeCurrentUser } = authenticateSlice.actions;
+export const { addCurrentUser, logout } = authenticateSlice.actions;
 export default authenticateSlice.reducer;

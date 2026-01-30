@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TagsModule } from './tags/tags.module';
+import { QuestionsModule } from './questions/questions.module';
 
 @Module({
   imports: [
@@ -23,15 +24,14 @@ import { TagsModule } from './tags/tags.module';
         database: configService.get<string>('DB_DATABASE'),
         synchronize: false,
         autoLoadEntities: true,
-        ssl: {
-          rejectUnauthorized: false,
-        },
       }),
     }),
 
     AuthModule,
 
     TagsModule,
+
+    QuestionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

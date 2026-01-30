@@ -1,11 +1,11 @@
 /* eslint-disable */
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class User1769682512959 implements MigrationInterface {
+export class Tag1769727893172 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'Users',
+        name: 'Tags',
         columns: [
           {
             name: 'id',
@@ -15,31 +15,14 @@ export class User1769682512959 implements MigrationInterface {
             generationStrategy: 'increment',
           },
           {
-            name: 'userid',
-            type: 'varchar',
+            name: 'tagId',
+            type: 'bigint',
             isUnique: true,
           },
           {
-            name: 'email',
+            name: 'tagName',
             type: 'varchar',
             isUnique: true,
-          },
-          {
-            name: 'username',
-            type: 'varchar',
-            isUnique: true,
-            isNullable: true,
-          },
-          {
-            name: 'createdAt',
-            type: 'timestamp',
-            default: 'NOW()',
-            isNullable: false,
-          },
-          {
-            name: 'updatedAt',
-            type: 'timestamp',
-            default: 'NOW()',
             isNullable: false,
           },
         ],
@@ -49,6 +32,6 @@ export class User1769682512959 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('Users');
+    await queryRunner.dropTable('Tags');
   }
 }

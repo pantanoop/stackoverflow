@@ -3,6 +3,9 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { User } from './src/auth/entities/user.entity';
 import * as dotenv from 'dotenv';
 import { SeederOptions } from 'typeorm-extension';
+import { Tag } from './src/tags/entities/tag.entity';
+import TagSeeder from './src/databases/seeds/tags.seeder';
+import { Question } from 'src/questions/entities/question.entity';
 
 dotenv.config();
 
@@ -13,8 +16,9 @@ const datasource: DataSourceOptions & SeederOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  entities: [User],
+  entities: [User, Tag, Question],
   migrations: ['src/migrations/*.ts'],
+  seeds: [TagSeeder],
   synchronize: false,
 };
 

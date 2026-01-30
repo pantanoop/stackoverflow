@@ -1,0 +1,86 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.search {
+  flex: 1;
+  max-width: 500px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-actions button {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.ask-btn {
+  background: #f48024;
+  color: white;
+  border: none;
+}
+
+.page {
+  width: 100%;
+  padding: 24px 40px;
+}
+
+.question-card {
+  border: 1px solid #e3e6e8;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: white;
+}
+
+.question-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.question-card p {
+  margin: 0;
+  color: #555;
+}
+
+.empty {
+  text-align: center;
+  color: #777;
+}
+
+.loader {
+  text-align: center;
+  padding: 16px;
+}
