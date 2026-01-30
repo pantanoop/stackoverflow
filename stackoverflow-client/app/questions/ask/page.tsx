@@ -25,7 +25,9 @@ import {
 } from "@mui/material";
 import { fetchTags } from "../../redux/tags/tagSlice";
 import { addQuestion } from "@/app/redux/questions/questionSlice";
+
 import "./ask.css";
+import TextEditor from "@/app/components/Editor/TextEditor";
 
 const AskQuestionSchema = z.object({
   title: z.string().min(15).max(55),
@@ -60,6 +62,7 @@ export default function AskQuestion() {
 
   const onSubmit = (data: AskQuestionData) => {
     const payload = { ...data, userid: currentUser?.userid };
+    console.log(payload, "fgfgfgfg");
     dispatch(addQuestion(payload));
     setOpenSnackbar(true);
     setTimeout(() => router.push("/questions"), 1200);
@@ -89,20 +92,34 @@ export default function AskQuestion() {
               )}
             />
 
+            {/* <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                // <TextField
+                //   {...field}
+                //   label="Question Description"
+                //   multiline
+                //   rows={8}
+                //   error={!!errors.description}
+                //   helperText={errors.description?.message}
+                //   fullWidth
+                //   margin="normal"
+                // />
+                <TextEditor
+                  {...field}
+                  label="Question Description"
+                  error={!!errors.description}
+                  helperText={errors.description?.message}
+                />
+              )}
+            /> */}
+
             <Controller
               name="description"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Question Description"
-                  multiline
-                  rows={8}
-                  error={!!errors.description}
-                  helperText={errors.description?.message}
-                  fullWidth
-                  margin="normal"
-                />
+                <TextEditor value={field.value} onChange={field.onChange} />
               )}
             />
 

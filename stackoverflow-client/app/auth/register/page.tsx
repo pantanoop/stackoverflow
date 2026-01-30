@@ -85,7 +85,7 @@ function Register() {
       };
       console.log(userData, "userdata");
 
-      dispatch(registerUser(userData));
+      await dispatch(registerUser(userData));
 
       if (currentUser) {
         const res = await createUserWithEmailAndPassword(
@@ -120,7 +120,7 @@ function Register() {
         email: user.email,
         username: user.displayName,
       };
-      dispatch(registerUser(userData));
+      await dispatch(registerUser(userData));
       console.log(currentUser);
       if (currentUser) {
         setOpenSnackbar(true);

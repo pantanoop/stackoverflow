@@ -2,6 +2,7 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import authReducer from "../redux/auth/authenticateSlice";
 import tagReducer from "../redux/tags/tagSlice";
 import questionReducer from "./questions/questionSlice";
+import answerReducer from "./answers/answerSlice";
 
 import {
   persistStore,
@@ -27,6 +28,7 @@ const persistedReducer = persistReducer(
     authenticator: authReducer,
     tags: tagReducer,
     questions: questionReducer,
+    ans: answerReducer,
   }),
 );
 

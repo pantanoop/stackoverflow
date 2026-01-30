@@ -76,9 +76,9 @@ function Login() {
         email: user.email,
         username: user.displayName,
       };
-      console.log(currentUser);
-      dispatch(addCurrentUser(userData));
-
+      console.log(currentUser, "before diasptch");
+      await dispatch(addCurrentUser(userData));
+      console.log(currentUser, "after dispatch");
       if (currentUser) {
         setOpenSnackbar(true);
         setTimeout(() => router.push("/questions"), 1000);
@@ -99,13 +99,14 @@ function Login() {
         username: user.displayName,
       };
 
-      dispatch(googleLogin(userData));
+      await dispatch(googleLogin(userData));
       console.log(currentUser);
       if (currentUser) {
         setOpenSnackbar(true);
         setTimeout(() => router.push("/questions"), 1000);
       }
     } catch (error) {
+      handleAuthError(error);
       console.error("Social login failed", error);
     }
   };
@@ -115,6 +116,11 @@ function Login() {
       setError("email", { type: "manual", message: "Email not registered" });
     } else if (error.code === "auth/wrong-password") {
       setError("password", { type: "manual", message: "Incorrect password" });
+    } else if (error.code === "auth/account-exists-with-different-credential") {
+      setError("email", {
+        type: "manual",
+        message: "account-exists-with-different-credential",
+      });
     } else {
       setError("email", { type: "manual", message: "Login failed" });
     }

@@ -24,6 +24,7 @@
     "migration:generate": "npx ts-node ./node_modules/typeorm/cli migration:generate src/migrations/NewMigration -d ./data-source.ts",
     "seed:run": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs seed:run"
   },
+
   "dependencies": {
     "@nestjs/common": "^11.1.12",
     "@nestjs/config": "^4.0.2",

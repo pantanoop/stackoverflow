@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, Param } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 
@@ -20,5 +20,10 @@ export class QuestionsController {
     const l = limit ? parseInt(limit) : 10;
     const p = page ? parseInt(page) : 1;
     return this.questionsService.findAll(l, p);
+  }
+
+  @Get('/:id')
+  async findQuestion(@Param(':id') id: number) {
+    return this.questionsService.findQuestion(id);
   }
 }

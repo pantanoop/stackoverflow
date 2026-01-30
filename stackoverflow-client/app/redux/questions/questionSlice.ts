@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export interface Question {
   id: number;
   title: string;
@@ -13,6 +14,7 @@ export interface Question {
 }
 
 interface QuestionsState {
+  question: Question | null;
   questions: Question[];
   total: number;
   page: number;
@@ -22,6 +24,7 @@ interface QuestionsState {
 }
 
 const initialState: QuestionsState = {
+  question: null,
   questions: [],
   total: 0,
   page: 1,
@@ -43,6 +46,19 @@ export const fetchQuestions = createAsyncThunk(
       total: data.total || 0,
       page: data.page || 1,
       limit: data.limit || limit,
+    };
+  },
+);
+
+export const fetchQuestionById = createAsyncThunk(
+  "questions/fetchQuestionById",
+  async ({ id }: { id: number }) => {
+    console.log(id, "slice");
+    const response = await axios.get(`${API_BASE_URL}/questions/${id}`);
+
+    const data = response.data || {};
+    return {
+      question: data ? data : null,
     };
   },
 );
@@ -103,6 +119,18 @@ const questionsSlice = createSlice({
         },
       )
       .addCase(addQuestion.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to add question";
+      })
+      .addCase(fetchQuestionById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchQuestionById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.question = action.payload;
+      })
+      .addCase(fetchQuestionById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to add question";
       });

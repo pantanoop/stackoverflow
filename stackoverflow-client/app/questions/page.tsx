@@ -22,19 +22,21 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { logout } from "../redux/auth/authenticateSlice";
+import Link from "next/link";
 export default function Questions() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { questions, total, loading, page, limit } = useAppSelector(
     (state) => state.questions,
   );
+  console.log(questions);
   const { currentUser } = useAppSelector((state) => state.authenticator);
 
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     dispatch(resetQuestions());
-    dispatch(fetchQuestions({ limit: 5, page: 1 }));
+    dispatch(fetchQuestions({ limit: 10, page: 1 }));
   }, [dispatch]);
 
   const fetchMore = useCallback(() => {
@@ -151,11 +153,14 @@ export default function Questions() {
             dataLength={filteredQuestions.length}
             next={fetchMore}
             hasMore={filteredQuestions.length < total}
-            loader={<div className="loader">Loading...</div>}
+            loader={<div className="loader">No more questions</div>}
           >
             {filteredQuestions.map((q) => (
               <div className="question-card" key={q.id}>
-                <h3>{q.title}</h3>
+                <h3 onClick={() => router.push(`/questions/${q.id}`)}>
+                  {q.title}
+                </h3>
+
                 <p>{q.description}</p>
               </div>
             ))}

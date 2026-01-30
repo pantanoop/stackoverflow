@@ -1,4 +1,3 @@
-/* eslint-disable */
 import {
   MigrationInterface,
   QueryRunner,
@@ -6,11 +5,11 @@ import {
   TableForeignKey,
 } from 'typeorm';
 
-export class Questions1769735534402 implements MigrationInterface {
+export class Answer1769768602105 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'Questions',
+        name: 'answers',
         columns: [
           {
             name: 'id',
@@ -20,51 +19,64 @@ export class Questions1769735534402 implements MigrationInterface {
             generationStrategy: 'increment',
           },
           {
-            name: 'title',
+            name: 'questionId',
+            type: 'int',
+            isNullable: false,
+          },
+          {
+            name: 'userId',
             type: 'varchar',
             isNullable: false,
           },
           {
-            name: 'description',
+            name: 'answer',
             type: 'text',
-            isNullable: true,
-          },
-          {
-            name: 'tags',
-            type: 'text',
             isNullable: false,
           },
+
           {
-            name: 'type',
-            type: 'varchar',
+            name: 'isValid',
+            type: 'boolean',
             isNullable: false,
-          },
-          {
-            name: 'userid',
-            type: 'varchar',
-            isNullable: false,
+            default: false,
           },
           {
             name: 'createdAt',
-            type: 'timestamp with time zone',
-            default: 'now()',
+            type: 'timestamp',
+            default: 'NOW()',
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'NOW()',
           },
         ],
       }),
       true,
     );
+
     // await queryRunner.createForeignKey(
-    //   'Questions',
+    //   'answers',
     //   new TableForeignKey({
-    //     columnNames: ['userid'],
+    //     columnNames: ['userId'],
     //     referencedTableName: 'Users',
     //     referencedColumnNames: ['userid'],
+    //     onDelete: 'CASCADE',
+    //   }),
+    // );
+
+    // await queryRunner.createForeignKey(
+    //   'answers',
+    //   new TableForeignKey({
+    //     columnNames: ['questionId'],
+    //     referencedTableName: 'Questions',
+    //     referencedColumnNames: ['id'],
     //     onDelete: 'CASCADE',
     //   }),
     // );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('Questions');
+    await queryRunner.dropTable('answers');
   }
 }
