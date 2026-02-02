@@ -1,4 +1,3 @@
-import { Question } from '../../questions/entities/question.entity';
 import {
   Entity,
   Column,
@@ -7,6 +6,8 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
+import { Answer } from '../../answers/entities/answer.entity';
+import { Question } from '../../questions/entities/question.entity';
 
 @Entity('Users')
 export class User {
@@ -22,10 +23,11 @@ export class User {
   @Column({ unique: true, nullable: true })
   username: string;
 
-  // @OneToMany(() => Question, (question) => question.user, {
-  //   onDelete: 'CASCADE',
-  // })
-  // question: Question;
+  @OneToMany(() => Answer, (answer) => answer.user)
+  answers: Answer[];
+
+  @OneToMany(() => Question, (question) => question.user)
+  questions: Question[];
 
   @CreateDateColumn({
     type: 'timestamp',

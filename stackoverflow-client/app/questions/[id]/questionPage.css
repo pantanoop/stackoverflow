@@ -1,0 +1,136 @@
+.so-main-wrapper {
+  background-color: #ffffff;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.so-navbar {
+  background-color: #f8f9f9 !important;
+  border-bottom: 1px solid #e3e6e8;
+  box-shadow: none !important;
+}
+
+.so-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.so-logo {
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #242729;
+}
+
+.so-logo span {
+  color: #f48024;
+}
+
+.so-search {
+  flex: 1;
+  max-width: 600px;
+}
+
+.so-ask-btn {
+  background-color: #0a95ff !important;
+  color: white !important;
+  text-transform: none !important;
+}
+
+.so-question-header {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.so-question-body {
+  display: flex;
+  margin-top: 20px;
+  gap: 20px;
+}
+
+.so-answer-layout {
+  display: flex;
+  gap: 20px;
+}
+
+.so-vote-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 60px;
+}
+
+.so-vote-count {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.so-content-column {
+  flex: 1;
+  position: relative;
+}
+
+.so-description {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #232629;
+}
+
+.so-tag-row {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.so-tag {
+  background-color: #e1ecf4 !important;
+  color: #39739d !important;
+}
+
+.so-user-info {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #6a737c;
+}
+
+.so-answer-section {
+  margin-top: 30px;
+}
+
+.so-answer-card {
+  margin-top: 15px;
+  padding: 16px;
+  border: 1px solid #e3e6e8;
+  box-shadow: none !important;
+}
+
+.so-post-answer {
+  margin-top: 30px;
+  padding: 20px;
+  box-shadow: none !important;
+  border: 1px solid #e3e6e8;
+}
+
+.so-submit-btn {
+  margin-top: 10px !important;
+  background-color: #0a95ff !important;
+  text-transform: none !important;
+}
+
+.so-small-btn {
+  text-transform: none !important;
+}
+
+.so-edit-icon {
+  position: absolute !important;
+  top: 0;
+  right: 0;
+}
+
+.so-loading {
+  display: flex;
+  justify-content: center;
+  margin-top: 80px;
+}

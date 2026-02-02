@@ -6,11 +6,16 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks/hooks";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import SearchIcon from "@mui/icons-material/Search";
+import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
+import ThumbDownOutlinedIcon from "@mui/icons-material/ThumbDownOutlined";
+
 import {
   AppBar,
   Toolbar,
   Typography,
-  Box,
   TextField,
   InputAdornment,
   IconButton,
@@ -21,20 +26,26 @@ import {
   CircularProgress,
   Divider,
   Container,
+  Alert,
+  Snackbar,
+  Box,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import Link from "next/link";
-import { fetchQuestionById } from "@/app/redux/questions/questionSlice";
 
-// import { postAnswer } from "@/app/redux/answers/answerSlice";
-import TextEditor from "@/app/components/Editor/TextEditor";
+import { fetchQuestionById } from "@/app/redux/questions/questionSlice";
 import {
   fetchAnswersByQusetionId,
   PostAnswer,
+  resetAnswers,
+  updateAnswer,
 } from "@/app/redux/answers/answerSlice";
+import { fetchReplies, postReply } from "../../redux/replies/replyAnswer";
+import TextEditor from "@/app/components/Editor/TextEditor";
+import { voteQuestionOrAnswer } from "../../redux/votes/voteSlice";
+
+import "./questionPage.css";
 
 const AnswerSchema = z.object({
-  answer: z.string().min(10, "Answer must be at least 10 characters").max(2000),
+  answer: z.string().min(10).max(2000),
 });
 
 type AnswerData = z.infer<typeof AnswerSchema>;
@@ -46,176 +57,310 @@ export default function QuestionPage() {
   const id = Number(params.id);
 
   const { question, loading } = useAppSelector((state) => state.questions);
+  const { answers } = useAppSelector((state) => state.ans);
+  const { replies } = useAppSelector((state) => state.replies);
   const { currentUser } = useAppSelector((state) => state.authenticator);
-  const answers = useAppSelector((state) => {
-    state.ans.answers;
-  });
-  console.log(answers);
-  console.log(question?.question?.title);
-  let que = question?.question;
-  console.log(que);
-  const [searchTerm, setSearchTerm] = useState("");
+
+  const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
+  const [editedAnswer, setEditedAnswer] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [openReplyEditor, setOpenReplyEditor] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
 
   useEffect(() => {
     if (id) {
+      dispatch(resetAnswers());
       dispatch(fetchQuestionById({ id }));
       dispatch(fetchAnswersByQusetionId({ id }));
     }
   }, [dispatch, id]);
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<AnswerData>({
+  useEffect(() => {
+    answers.forEach((a) => dispatch(fetchReplies(a.id)));
+  }, [answers, dispatch]);
+
+  const { control, handleSubmit, reset } = useForm<AnswerData>({
     resolver: zodResolver(AnswerSchema),
     defaultValues: { answer: "" },
   });
 
-  const onSubmit = (data: AnswerData) => {
-    console.log("Submitting Answer:", data);
-    dispatch(
+  const onSubmit = async (data: AnswerData) => {
+    await dispatch(
       PostAnswer({ questionId: id, userId: currentUser?.userid, ...data }),
     );
     reset();
+    setOpenSnackbar(true);
   };
 
-  const handleLogin = () => router.push("/auth/login");
-  const handleRegister = () => router.push("/auth/register");
-  const handleAskQuestion = () =>
-    currentUser ? router.push("/questions/ask") : router.push("/auth/login");
-  const handleLogout = () => {
-    /* dispatch(logout()); */ router.push("/auth/login");
+  const handleVote = (
+    voteType: "upvote" | "downvote",
+    entityId: number,
+    entityType: "question" | "answer",
+  ) => {
+    if (!currentUser) return router.push("/auth/login");
+    dispatch(
+      voteQuestionOrAnswer({
+        userId: currentUser.userid,
+        entityType,
+        entityId,
+        voteType,
+      }),
+    );
+  };
+
+  const handleReplySubmit = async (
+    answerId: number,
+    parentReplyId?: number,
+  ) => {
+    if (!currentUser) return router.push("/auth/login");
+    await dispatch(
+      postReply({
+        answerId,
+        parentReplyId,
+        text: replyText,
+        userId: currentUser.userid,
+        username: currentUser.username,
+      }),
+    );
+    setReplyText("");
+    setOpenReplyEditor(null);
+  };
+
+  const renderReplies = (repliesList: any[], answerId: number) => {
+    return repliesList.map((r) => (
+      <Box
+        key={r.id}
+        ml={r.parentReplyId ? 6 : 0}
+        mt={1}
+        sx={{
+          borderLeft: r.parentReplyId ? "2px solid #eee" : "none",
+          pl: 2,
+          backgroundColor: r.parentReplyId ? "#fafafa" : "transparent",
+          borderRadius: 1,
+          p: 1,
+        }}
+      >
+        <Typography variant="subtitle2" color="text.secondary">
+          {r.username} • {new Date(r.createdAt).toLocaleString()}
+        </Typography>
+        <Typography sx={{ mt: 0.5 }}>{r.text}</Typography>
+        <Button size="small" onClick={() => setOpenReplyEditor(r.id)}>
+          Reply
+        </Button>
+        {openReplyEditor === r.id && (
+          <Box mt={1}>
+            <TextEditor value={replyText} onChange={setReplyText} />
+            <Button
+              size="small"
+              variant="contained"
+              sx={{ mt: 1 }}
+              onClick={() => handleReplySubmit(answerId, r.id)}
+            >
+              Post Reply
+            </Button>
+          </Box>
+        )}
+        {r.childReplies && renderReplies(r.childReplies, answerId)}
+      </Box>
+    ));
   };
 
   if (loading || !question) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-      >
+      <div className="so-loading">
         <CircularProgress />
-      </Box>
+      </div>
     );
   }
 
   return (
-    <>
-      <header className="navbar">
-        <AppBar
-          position="static"
-          sx={{ backgroundColor: "#fff", boxShadow: 1 }}
-        >
-          <Toolbar sx={{ justifyContent: "space-between" }}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: "bold",
-                color: "black",
-                cursor: "pointer",
+    <div className="so-main-wrapper">
+      <AppBar position="static" className="so-navbar">
+        <Toolbar className="so-toolbar">
+          <div className="so-logo" onClick={() => router.push("/questions")}>
+            stack<span>overflow</span>
+          </div>
+
+          <div className="so-search">
+            <TextField
+              size="small"
+              fullWidth
+              placeholder="Search..."
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
               }}
-              onClick={() => router.push("/questions")}
-            >
-              Stack Overflow
+            />
+          </div>
+
+          <Button
+            className="so-ask-btn"
+            onClick={() =>
+              currentUser
+                ? router.push("/questions/ask")
+                : router.push("/auth/login")
+            }
+          >
+            Ask Question
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Container maxWidth="lg">
+        <div className="so-question-header">
+          <Typography variant="h5">{question.title}</Typography>
+        </div>
+
+        <Divider />
+
+        <div className="so-question-body">
+          <div className="so-vote-column">
+            <IconButton onClick={() => handleVote("upvote", id, "question")}>
+              <ThumbUpOutlinedIcon />
+            </IconButton>
+
+            <Typography className="so-vote-count">
+              {question.upvotes - question.downvotes}
             </Typography>
 
-            <Box sx={{ flexGrow: 1, maxWidth: 500, mx: 2 }}>
-              <TextField
-                placeholder="Search Question..."
-                size="small"
-                fullWidth
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ backgroundColor: "#f5f5f5", borderRadius: 1 }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton disabled>
-                        <SearchIcon />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Box>
+            <IconButton onClick={() => handleVote("downvote", id, "question")}>
+              <ThumbDownOutlinedIcon />
+            </IconButton>
+          </div>
 
-            <Stack direction="row" spacing={1}>
-              {!currentUser ? (
-                <>
-                  <Button variant="outlined" onClick={handleLogin}>
-                    Login
-                  </Button>
-                  <Button variant="contained" onClick={handleRegister}>
-                    Signup
-                  </Button>
-                </>
-              ) : (
-                <Button variant="outlined" onClick={handleLogout}>
-                  Logout
+          <div className="so-content-column">
+            <div
+              className="so-description"
+              dangerouslySetInnerHTML={{ __html: question.description }}
+            />
+
+            <div className="so-tag-row">
+              {question.tags?.map((tag: string) => (
+                <Chip key={tag} label={tag} className="so-tag" size="small" />
+              ))}
+            </div>
+
+            <div className="so-user-info">
+              asked by <b>{question.username}</b>
+            </div>
+          </div>
+        </div>
+
+        <div className="so-answer-section">
+          <Typography variant="h6">{answers.length} Answers</Typography>
+
+          {answers.map((a: any) => (
+            <Card key={a.id} className="so-answer-card">
+              <div className="so-answer-layout">
+                {" "}
+                <div className="so-content-column">
+                  {currentUser?.userid === a.userId && (
+                    <IconButton
+                      className="so-edit-icon"
+                      onClick={() => {
+                        setEditingAnswerId(a.id);
+                        setEditedAnswer(a.answer);
+                      }}
+                    >
+                      <EditOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  )}
+
+                  {editingAnswerId === a.id ? (
+                    <>
+                      <TextEditor
+                        value={editedAnswer}
+                        onChange={setEditedAnswer}
+                      />
+                      <Stack direction="row" spacing={1} mt={1}>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          className="so-small-btn"
+                          onClick={async () => {
+                            setSaving(true);
+                            await dispatch(
+                              updateAnswer({
+                                answerId: a.id,
+                                userId: currentUser?.userid,
+                                answer: editedAnswer,
+                              }),
+                            );
+                            setSaving(false);
+                            setEditingAnswerId(null);
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="small"
+                          onClick={() => setEditingAnswerId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </Stack>
+                    </>
+                  ) : (
+                    <div
+                      className="so-description"
+                      dangerouslySetInnerHTML={{ __html: a.answer }}
+                    />
+                  )}
+
+                  <div className="so-user-info">
+                    answered by <b>{a.username}</b>
+                  </div>
+                </div>
+              </div>
+
+              <Stack direction="row" spacing={1} mt={1}>
+                <Button
+                  size="small"
+                  color={a.myVote === "upvote" ? "primary" : "default"}
+                  onClick={() => handleVote("upvote", a.id, "answer")}
+                >
+                  <ThumbUpOutlinedIcon /> {a.upvotes || 0}
                 </Button>
+                <Button
+                  size="small"
+                  color={a.myVote === "downvote" ? "error" : "default"}
+                  onClick={() => handleVote("downvote", a.id, "answer")}
+                >
+                  <ThumbDownOutlinedIcon /> {a.downvotes || 0}
+                </Button>
+                <Button size="small" onClick={() => setOpenReplyEditor(a.id)}>
+                  Reply
+                </Button>
+              </Stack>
+
+              {openReplyEditor === a.id && (
+                <Box mt={1}>
+                  <TextEditor value={replyText} onChange={setReplyText} />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    sx={{ mt: 1 }}
+                    onClick={() => handleReplySubmit(a.id)}
+                  >
+                    Post Reply
+                  </Button>
+                </Box>
               )}
-              <Button variant="contained" onClick={handleAskQuestion}>
-                Ask Question
-              </Button>
-            </Stack>
-          </Toolbar>
-        </AppBar>
-      </header>
 
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant="h4"
-            component="h1"
-            gutterBottom
-            sx={{ fontWeight: 500 }}
-          >
-            {que?.title}
-          </Typography>
+              {replies
+                .filter((r) => r.answerId === a.id && !r.parentReplyId)
+                .map((r) => renderReplies([r], a.id))}
+            </Card>
+          ))}
+        </div>
 
-          <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-            <Typography variant="caption" color="text.secondary">
-              Asked{" "}
-              <strong>{new Date(que?.createdAt).toLocaleDateString()}</strong>
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Author ID: <strong>{que?.userid}</strong>
-            </Typography>
-            <Typography variant="caption" color="primary">
-              Type: {que?.type}
-            </Typography>
-          </Stack>
+        <Card className="so-post-answer">
+          <Typography variant="h6">Your Answer</Typography>
 
-          <Divider sx={{ mb: 3 }} />
-
-          <Typography
-            variant="body1"
-            sx={{ lineHeight: 1.7, whiteSpace: "pre-wrap", mb: 4 }}
-          >
-            {que?.description}
-          </Typography>
-
-          <Stack direction="row" spacing={1} sx={{ mb: 4 }}>
-            {que.tags?.map((tag: string) => (
-              <Chip
-                key={tag}
-                label={tag}
-                size="small"
-                clickable
-                sx={{
-                  backgroundColor: "#e1ecf4",
-                  color: "#39739d",
-                  borderRadius: "4px",
-                }}
-              />
-            ))}
-          </Stack>
-        </Box>
-
-        <Card variant="outlined" sx={{ p: 3, borderLeft: "4px solid #f48225" }}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Controller
               name="answer"
@@ -224,64 +369,20 @@ export default function QuestionPage() {
                 <TextEditor value={field.value} onChange={field.onChange} />
               )}
             />
-            {/* <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Question Description"
-                  multiline
-                  rows={8}
-                  error={!!errors.description}
-                  helperText={errors.description?.message}
-                  fullWidth
-                  margin="normal"
-                />
-                // <TextEditor
-                //   {...field}
-                //   label="Question Description"
-                //   error={!!errors.description}
-                //   helperText={errors.description?.message}
-                // />
-              )} */}
-            {/* /> */}
-
-            <Button
-              variant="contained"
-              type="submit"
-              size="large"
-              sx={{
-                mt: 2,
-                px: 4,
-                backgroundColor: "#0a95ff",
-                "&:hover": { backgroundColor: "#0074cc" },
-              }}
-            >
-              Post Your Answer
+            <Button type="submit" variant="contained" className="so-submit-btn">
+              Post Answer
             </Button>
           </form>
         </Card>
-        <Card variant="outlined" sx={{ p: 3, borderLeft: "4px solid #f48225" }}>
-          (answers ?
-            answers?.map((a: any) => (
-              <div className="question-card" key={a.id}>
-                {/* <h3 onClick={() => router.push(`/questions/${a.id}`)}>{q.title}</h3> */}
-
-                <p>{a?.answer}</p>
-              </div>
-            ))
-        </Card>
-
-        {/* <Typography align="center" mt={4}>
-          <Link
-            href="/questions"
-            style={{ textDecoration: "none", color: "#007bff" }}
-          >
-            ← Back to all questions
-          </Link>
-        </Typography> */}
       </Container>
-    </>
+
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={2000}
+        onClose={() => setOpenSnackbar(false)}
+      >
+        <Alert severity="success">Answer posted successfully 🚀</Alert>
+      </Snackbar>
+    </div>
   );
 }

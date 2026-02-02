@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Link as MuiLink } from "@mui/material";
 import {
   addCurrentUser,
-  googleLogin,
+  socialLogin,
 } from "@/app/redux/auth/authenticateSlice";
 
 import { auth, googleProvider, githubProvider } from "../../config/firebase";
@@ -35,6 +35,8 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
 
+import "./login.css";
+
 const LoginSchema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string().min(1, "Password is required"),
@@ -48,6 +50,17 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const { currentUser } = useAppSelector((state) => state.authenticator);
+
+  useEffect(() => {
+    if (currentUser) {
+      setOpenSnackbar(true);
+      const timer = setTimeout(() => {
+        router.push("/questions");
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser, router]);
 
   const {
     control,
@@ -70,19 +83,14 @@ function Login() {
         data.password,
       );
       const user = res.user;
-      console.log(user);
+
       const userData = {
         userid: user.uid ?? Date.now().toLocaleString(),
         email: user.email,
         username: user.displayName,
       };
-      console.log(currentUser, "before diasptch");
-      await dispatch(addCurrentUser(userData));
-      console.log(currentUser, "after dispatch");
-      if (currentUser) {
-        setOpenSnackbar(true);
-        setTimeout(() => router.push("/questions"), 1000);
-      }
+
+      dispatch(addCurrentUser(userData));
     } catch (error: any) {
       handleAuthError(error);
     }
@@ -99,15 +107,9 @@ function Login() {
         username: user.displayName,
       };
 
-      await dispatch(googleLogin(userData));
-      console.log(currentUser);
-      if (currentUser) {
-        setOpenSnackbar(true);
-        setTimeout(() => router.push("/questions"), 1000);
-      }
+      dispatch(socialLogin(userData));
     } catch (error) {
       handleAuthError(error);
-      console.error("Social login failed", error);
     }
   };
 
@@ -127,115 +129,109 @@ function Login() {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        minHeight: "100vh",
-        width: "100vw",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "#f5f5f5",
-      }}
-    >
-      <Card
-        variant="outlined"
-        sx={{
-          p: 4,
-          width: "100%",
-          maxWidth: 350,
-          minHeight: 500,
-          display: "flex",
-          flexDirection: "column",
-          alignContent: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography variant="h5" mt={1}>
-          Welcome to StackOverflow
-        </Typography>
-
-        <Box
-          component="form"
-          onSubmit={handleSubmit(handleLogin)}
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        >
-          <Controller
-            name="email"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                variant="standard"
-                label="Email"
-                error={!!errors.email}
-                helperText={errors.email?.message}
-              />
-            )}
+    <div className="so-login-page">
+      <div className="so-login-container">
+        <div className="so-logo-area">
+          <img
+            className="so-logo"
+            src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Stack_Overflow_icon.svg"
+            alt="logo"
           />
+        </div>
 
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                variant="standard"
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                error={!!errors.password}
-                helperText={errors.password?.message}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword((s) => !s)}>
-                        {showPassword ? <Visibility /> : <VisibilityOff />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
-          />
-
-          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
-            Login
-          </Button>
-
-          <Typography textAlign="center" variant="body2" sx={{ my: 1 }}>
-            OR
-          </Typography>
-
+        <div className="so-social-buttons">
           <Button
             fullWidth
             variant="outlined"
+            className="so-google-btn"
             startIcon={<GoogleIcon />}
             onClick={() => handleSocialLogin(googleProvider)}
           >
-            Continue with Google
+            Log in with Google
           </Button>
 
           <Button
             fullWidth
-            variant="outlined"
+            variant="contained"
+            className="so-github-btn"
             startIcon={<GitHubIcon />}
             onClick={() => handleSocialLogin(githubProvider)}
-            sx={{ mt: 1, color: "#24292e", borderColor: "#24292e" }}
           >
-            Continue with GitHub
+            Log in with GitHub
           </Button>
-        </Box>
-        <Typography align="center" mt={3}>
-          New user?{" "}
-          <MuiLink component={Link} href="/auth/register">
-            Register
-          </MuiLink>
-        </Typography>
-      </Card>
+        </div>
+
+        <Card className="so-login-card">
+          <Box
+            component="form"
+            onSubmit={handleSubmit(handleLogin)}
+            className="so-login-form"
+          >
+            <Controller
+              name="email"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Email"
+                  variant="outlined"
+                  fullWidth
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                />
+              )}
+            />
+
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Password"
+                  variant="outlined"
+                  fullWidth
+                  type={showPassword ? "text" : "password"}
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => setShowPassword((s) => !s)}>
+                          {showPassword ? <Visibility /> : <VisibilityOff />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
+            />
+
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              className="so-login-submit"
+            >
+              Log in
+            </Button>
+          </Box>
+        </Card>
+
+        <div className="so-login-footer">
+          <Typography>
+            Don’t have an account?{" "}
+            <MuiLink component={Link} href="/auth/register">
+              Sign up
+            </MuiLink>
+          </Typography>
+        </div>
+      </div>
 
       <Snackbar open={openSnackbar} autoHideDuration={3000}>
         <Alert severity="success">Logged in successfully!</Alert>
       </Snackbar>
-    </Box>
+    </div>
   );
 }
 

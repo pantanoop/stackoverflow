@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { createUser, googlesignin } from "./service/authApi";
+import { createUser, SocialSignIn } from "./service/authApi";
 
 export type User = {
   userid?: string;
@@ -32,13 +32,13 @@ export const registerUser = createAsyncThunk(
   },
 );
 
-export const googleLogin = createAsyncThunk(
+export const socialLogin = createAsyncThunk(
   "user/loginGoogle",
 
   async (credentials: any, { rejectWithValue }) => {
     console.log(credentials, "credentials in login google");
     try {
-      return await googlesignin(credentials);
+      return await SocialSignIn(credentials);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -76,17 +76,17 @@ const authenticateSlice = createSlice({
         state.error = action.payload as string;
         state.currentUser = null;
       })
-      .addCase(googleLogin.pending, (state) => {
+      .addCase(socialLogin.pending, (state) => {
         console.log("login pending");
         state.loading = true;
         state.error = null;
       })
-      .addCase(googleLogin.fulfilled, (state, action) => {
+      .addCase(socialLogin.fulfilled, (state, action) => {
         console.log("login fulfilled", action.payload);
         state.loading = false;
         state.currentUser = action.payload;
       })
-      .addCase(googleLogin.rejected, (state, action) => {
+      .addCase(socialLogin.rejected, (state, action) => {
         console.log("login rejected");
         console.log("login google error", state.error);
         state.loading = false;

@@ -30,7 +30,7 @@ export const createUser = async (credentials: any) => {
   return response.json();
 };
 
-export const googlesignin = async (credentials: any) => {
+export const SocialSignIn = async (credentials: any) => {
   console.log(credentials, "api login");
   const response = await fetch(`${API_BASE_URL}/auth/login/google`, {
     method: "POST",

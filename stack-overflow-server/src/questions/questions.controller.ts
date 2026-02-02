@@ -1,6 +1,15 @@
-import { Controller, Post, Body, Get, Query, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  Param,
+  Patch,
+} from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
+import { UpdateQuestionDto } from './dto/update-question.dto';
 
 @Controller('questions')
 export class QuestionsController {
@@ -23,7 +32,14 @@ export class QuestionsController {
   }
 
   @Get('/:id')
-  async findQuestion(@Param(':id') id: number) {
-    return this.questionsService.findQuestion(id);
+  async findQuestion(@Param('id') id: number) {
+    console.log('dto hit in findQuestion by id', id);
+    return this.questionsService.findQuestion(+id);
+  }
+
+  @Patch('/:id')
+  async updateQuestion(@Body() updateQuestionDto: UpdateQuestionDto) {
+    console.log('dto hit', updateQuestionDto);
+    return this.questionsService.updateQuestion(updateQuestionDto);
   }
 }

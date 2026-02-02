@@ -2,7 +2,7 @@ import {
   MigrationInterface,
   QueryRunner,
   Table,
-  TableForeignKey,
+  // TableForeignKey,
 } from 'typeorm';
 
 export class Answer1769768602105 implements MigrationInterface {
@@ -61,16 +61,6 @@ export class Answer1769768602105 implements MigrationInterface {
     //     columnNames: ['userId'],
     //     referencedTableName: 'Users',
     //     referencedColumnNames: ['userid'],
-    //     onDelete: 'CASCADE',
-    //   }),
-    // );
-
-    // await queryRunner.createForeignKey(
-    //   'answers',
-    //   new TableForeignKey({
-    //     columnNames: ['questionId'],
-    //     referencedTableName: 'Questions',
-    //     referencedColumnNames: ['id'],
     //     onDelete: 'CASCADE',
     //   }),
     // );

@@ -1,59 +1,73 @@
-.add-product-container {
-  display: flex;
-  justify-content: center;
+.so-ask-wrapper {
+  background-color: #f8f9f9;
+  min-height: 100vh;
   padding: 20px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-.add-product-card {
-  width: 100%;
-  max-width: 700px;
+.so-ask-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.so-ask-header {
+  margin-bottom: 20px !important;
+  font-weight: 600 !important;
+  color: #232629;
+}
+
+.so-ask-card {
   padding: 24px;
+  border: 1px solid #e3e6e8;
+  box-shadow: none !important;
+  background-color: white;
 }
 
-.add-product-title {
+.so-form-section {
+  margin-bottom: 24px;
+}
+
+.so-section-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #232629;
+  margin-bottom: 4px !important;
+}
+
+.so-section-desc {
+  font-size: 12px !important;
+  color: #6a737c;
+  margin-bottom: 8px !important;
+}
+
+.so-input {
+  background-color: white;
+}
+
+.so-action-section {
+  margin-top: 20px;
+}
+
+.so-primary-btn {
+  background-color: #0a95ff !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+}
+
+.so-secondary-btn {
+  text-transform: none !important;
+  border-color: #0a95ff !important;
+  color: #0a95ff !important;
+}
+
+.so-back-link {
+  margin-top: 20px;
+  font-size: 13px;
+  color: #6a737c;
   text-align: center;
-  margin-bottom: 16px;
 }
 
-.add-product-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.image-btn {
-  align-self: flex-start;
-}
-
-.image-preview {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.image-preview img {
-  width: 70px;
-  height: 70px;
-  object-fit: cover;
-  border-radius: 6px;
-}
-
-.back-link {
-  margin-top: 16px;
-}
-
-@media (max-width: 768px) {
-  .add-product-card {
-    padding: 16px;
-  }
-
-  .add-product-container {
-    padding: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .add-product-card {
-    border-radius: 0;
-  }
+.so-back-link a {
+  color: #0a95ff;
+  text-decoration: none;
 }

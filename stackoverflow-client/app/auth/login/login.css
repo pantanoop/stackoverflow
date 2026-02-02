@@ -1,0 +1,83 @@
+.so-login-page {
+  background-color: #f1f2f3;
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.so-login-container {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.so-logo-area {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.so-logo {
+  width: 40px;
+  height: 40px;
+}
+
+.so-social-buttons {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.so-google-btn {
+  background-color: white !important;
+  color: #3b4045 !important;
+  border: 1px solid #d6d9dc !important;
+  text-transform: none !important;
+  padding: 10px !important;
+}
+
+.so-github-btn {
+  background-color: #2f3337 !important;
+  color: white !important;
+  text-transform: none !important;
+  padding: 10px !important;
+}
+
+.so-login-card {
+  width: 100%;
+  padding: 24px;
+  border-radius: 6px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05) !important;
+}
+
+.so-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.so-login-submit {
+  margin-top: 8px !important;
+  background-color: #0a95ff !important;
+  text-transform: none !important;
+  padding: 10px !important;
+  font-weight: 600 !important;
+}
+
+.so-login-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #6a737c;
+}
+
+.so-login-footer a {
+  color: #0a95ff;
+  text-decoration: none;
+}

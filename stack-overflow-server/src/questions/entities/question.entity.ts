@@ -1,4 +1,3 @@
-import { Answer } from '../../answers/entities/answer.entity';
 import { User } from '../../auth/entities/user.entity';
 import {
   Entity,
@@ -7,8 +6,12 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  ManyToMany,
+  JoinTable,
   OneToMany,
 } from 'typeorm';
+import { Tag } from '../../tags/entities/tag.entity';
+import { Answer } from '../../answers/entities/answer.entity';
 
 @Entity('Questions')
 export class Question {
@@ -21,18 +24,6 @@ export class Question {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column('simple-array')
-  tags: string[];
-
-  // @ManyToOne(() => User, (user) => user.question)
-  // @JoinColumn({ name: 'userid ' })
-  // user: User;
-
-  // @OneToMany(() => Answer, (answer) => answer.question, {
-  //   onDelete: 'CASCADE',
-  // })
-  // answers: Answer[];
-
   @Column()
   type: string;
 
@@ -41,4 +32,25 @@ export class Question {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @ManyToOne(() => User, (user) => user.questions, { eager: true })
+  @JoinColumn({ name: 'userid', referencedColumnName: 'userid' })
+  user: User;
+
+  @OneToMany(() => Answer, (answer) => answer.question)
+  answers: Answer[];
+
+  @ManyToMany(() => Tag, (tag) => tag.questions, { cascade: true })
+  @JoinTable({
+    name: 'question_tags',
+    joinColumn: {
+      name: 'questionId',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'tagId',
+      referencedColumnName: 'id',
+    },
+  })
+  tags: Tag[];
 }

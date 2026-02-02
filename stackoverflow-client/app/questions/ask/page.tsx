@@ -10,19 +10,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   TextField,
   Button,
-  Box,
   Typography,
   Card,
   Snackbar,
   Alert,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
-  Chip,
   Stack,
-  CircularProgress,
 } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
+
 import { fetchTags } from "../../redux/tags/tagSlice";
 import { addQuestion } from "@/app/redux/questions/questionSlice";
 
@@ -30,9 +25,17 @@ import "./ask.css";
 import TextEditor from "@/app/components/Editor/TextEditor";
 
 const AskQuestionSchema = z.object({
-  title: z.string().min(15).max(55),
+  title: z
+    .string()
+    .max(55)
+    .refine((val) => val.replace(/\s/g, "").length >= 15, {
+      message: "Title must have at least 15 characters (excluding spaces)",
+    }),
+
   description: z.string().max(2000),
+
   tags: z.array(z.string()).min(1),
+
   type: z.enum(["draft", "public"]),
 });
 
@@ -44,9 +47,9 @@ export default function AskQuestion() {
   const currentUser = useAppSelector(
     (state) => state.authenticator.currentUser,
   );
-  const { tags, loading } = useAppSelector((state) => state.tags);
+  const { tags } = useAppSelector((state) => state.tags);
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [tagOpen, setTagOpen] = useState(false);
+
   const {
     control,
     handleSubmit,
@@ -62,58 +65,49 @@ export default function AskQuestion() {
 
   const onSubmit = (data: AskQuestionData) => {
     const payload = { ...data, userid: currentUser?.userid };
-    console.log(payload, "fgfgfgfg");
     dispatch(addQuestion(payload));
     setOpenSnackbar(true);
     setTimeout(() => router.push("/questions"), 1200);
   };
 
   return (
-    <>
-      <div className="add-product-container">
-        <Card variant="outlined" className="add-product-card">
-          <Typography variant="h5" className="add-product-title">
-            Ask Your Question
-          </Typography>
+    <div className="so-ask-wrapper">
+      <div className="so-ask-container">
+        <Typography variant="h5" className="so-ask-header">
+          Ask a public question
+        </Typography>
 
-          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+        <Card className="so-ask-card">
+          <div className="so-form-section">
+            <Typography className="so-section-title">Title</Typography>
+            <Typography className="so-section-desc">
+              Be specific and imagine you’re asking a question to another person
+            </Typography>
+
             <Controller
               name="title"
               control={control}
               render={({ field }) => (
                 <TextField
                   {...field}
-                  label="Question Title"
+                  placeholder="e.g. How to center a div in CSS?"
                   error={!!errors.title}
                   helperText={errors.title?.message}
                   fullWidth
-                  margin="normal"
+                  size="small"
+                  className="so-input"
                 />
               )}
             />
+          </div>
 
-            {/* <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                // <TextField
-                //   {...field}
-                //   label="Question Description"
-                //   multiline
-                //   rows={8}
-                //   error={!!errors.description}
-                //   helperText={errors.description?.message}
-                //   fullWidth
-                //   margin="normal"
-                // />
-                <TextEditor
-                  {...field}
-                  label="Question Description"
-                  error={!!errors.description}
-                  helperText={errors.description?.message}
-                />
-              )}
-            /> */}
+          <div className="so-form-section">
+            <Typography className="so-section-title">
+              What are the details of your problem?
+            </Typography>
+            <Typography className="so-section-desc">
+              Introduce the problem and expand on what you put in the title
+            </Typography>
 
             <Controller
               name="description"
@@ -122,86 +116,73 @@ export default function AskQuestion() {
                 <TextEditor value={field.value} onChange={field.onChange} />
               )}
             />
+          </div>
+
+          <div className="so-form-section">
+            <Typography className="so-section-title">Tags</Typography>
+            <Typography className="so-section-desc">
+              Add up to 5 tags to describe what your question is about
+            </Typography>
 
             <Controller
               name="tags"
               control={control}
               render={({ field }) => (
-                <FormControl fullWidth margin="normal" error={!!errors.tags}>
-                  <InputLabel>Tags</InputLabel>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={tags.map((t: any) => t.tagName)}
+                  value={field.value}
+                  filterSelectedOptions
+                  onChange={(_, newValue) => {
+                    const normalized = newValue
+                      .map((tag: string) => tag.trim().toLowerCase())
+                      .slice(0, 5);
 
-                  {loading ? (
-                    <Box display="flex" justifyContent="center" p={2}>
-                      <CircularProgress size={22} />
-                    </Box>
-                  ) : (
-                    <Select
-                      {...field}
-                      multiple
-                      open={tagOpen}
-                      onOpen={() => setTagOpen(true)}
-                      onClose={() => setTagOpen(false)}
-                      label="Tags"
-                      MenuProps={{
-                        PaperProps: {
-                          sx: {
-                            maxHeight: 240,
-                          },
-                        },
-                      }}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setTagOpen(false);
-                      }}
-                      renderValue={(selected) => (
-                        <Stack direction="row" spacing={1} flexWrap="wrap">
-                          {selected.map((value) => (
-                            <Chip key={value} label={value} />
-                          ))}
-                        </Stack>
-                      )}
-                    >
-                      {tags.map((tag: any) => (
-                        <MenuItem key={tag.id} value={tag.tagName}>
-                          {tag.tagName}
-                        </MenuItem>
-                      ))}
-                    </Select>
+                    field.onChange(normalized);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="e.g. javascript react"
+                      error={!!errors.tags}
+                      helperText={errors.tags?.message}
+                      size="small"
+                      className="so-input"
+                    />
                   )}
-
-                  <Typography variant="caption" color="error">
-                    {errors.tags?.message}
-                  </Typography>
-                </FormControl>
+                />
               )}
             />
+          </div>
 
-            <Stack direction="row" spacing={2} mt={2}>
+          <div className="so-action-section">
+            <Stack direction="row" spacing={2}>
               <Button
-                fullWidth
                 variant="contained"
-                onClick={handleSubmit((data) =>
-                  onSubmit({ ...data, type: "draft" }),
-                )}
-              >
-                Save Draft
-              </Button>
-
-              <Button
-                fullWidth
-                variant="outlined"
+                className="so-primary-btn"
                 onClick={handleSubmit((data) =>
                   onSubmit({ ...data, type: "public" }),
                 )}
               >
-                Ask Public
+                Post your question
+              </Button>
+
+              <Button
+                variant="outlined"
+                className="so-secondary-btn"
+                onClick={handleSubmit((data) =>
+                  onSubmit({ ...data, type: "draft" }),
+                )}
+              >
+                Save draft
               </Button>
             </Stack>
-          </Box>
+          </div>
 
-          <Typography align="center" mt={2}>
+          <div className="so-back-link">
             Back to <Link href="/questions">Questions</Link>
-          </Typography>
+          </div>
         </Card>
       </div>
 
@@ -212,6 +193,6 @@ export default function AskQuestion() {
       >
         <Alert severity="success">Question submitted successfully 🚀</Alert>
       </Snackbar>
-    </>
+    </div>
   );
 }

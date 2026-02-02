@@ -30,11 +30,6 @@ export class Questions1769735534402 implements MigrationInterface {
             isNullable: true,
           },
           {
-            name: 'tags',
-            type: 'text',
-            isNullable: false,
-          },
-          {
             name: 'type',
             type: 'varchar',
             isNullable: false,

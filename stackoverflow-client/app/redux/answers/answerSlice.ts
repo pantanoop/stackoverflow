@@ -1,28 +1,25 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
+import { voteQuestionOrAnswer } from "@/app/redux/votes/voteSlice";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface Answer {
   id: number;
   questionId: number;
-  description: string;
+  answer: string;
   userId: string;
-  text: string;
-  userid: string;
-  upvote?: number;
-  downvote?: number;
+  username: string;
   createdAt: string;
   updatedAt: string;
-  isValid?: boolean;
+  upvotes: number;
+  downvotes: number;
+  myVote: "upvote" | "downvote" | null;
 }
 
 interface AnswerState {
   answer: Answer | null;
   answers: Answer[];
-  //   total: number;
-  //   page: number;
-  //   limit: number;
   loading: boolean;
   error: string | null;
 }
@@ -30,49 +27,57 @@ interface AnswerState {
 const initialState: AnswerState = {
   answer: null,
   answers: [],
-  //   total: 0,
-  //   page: 1,
-  //   limit: 5,
   loading: false,
   error: null,
 };
 
-// export const fetcAnswers = createAsyncThunk(
-//   "questions/fetchAnswers",
-//   async ({ limit, page }: { limit: number; page: number }) => {
-//     const response = await axios.get(
-//       `${API_BASE_URL}/answers?limit=${limit}&page=${page}`,
-//     );
-
-//     const data = response.data || {};
-//     return {
-//       questions: Array.isArray(data.questions) ? data.questions : [],
-//       total: data.total || 0,
-//       page: data.page || 1,
-//       limit: data.limit || limit,
-//     };
-//   },
-// );
-
+// Fetch all answers for a question
 export const fetchAnswersByQusetionId = createAsyncThunk(
-  "questions/fetchAnswersByQusetionId",
+  "answer/fetchAnswersByQusetionId",
   async ({ id }: { id: number }) => {
-    console.log(id, "slice in fetch answers");
     const response = await axios.get(`${API_BASE_URL}/answers/${id}`);
+    const data = response.data || [];
+    return Array.isArray(data)
+      ? data.map((a) => ({
+          ...a,
+          upvotes: a.upvotes || 0,
+          downvotes: a.downvotes || 0,
+          myVote: a.myVote || null,
+        }))
+      : [];
+  },
+);
 
-    const data = response.data || {};
+// Post a new answer
+export const PostAnswer = createAsyncThunk(
+  "answer/addAnswer",
+  async (answerData: any) => {
+    const response = await axios.post(`${API_BASE_URL}/answers`, answerData);
+    const a = response.data;
     return {
-      question: data ? data : null,
+      ...a,
+      upvotes: a.upvotes || 0,
+      downvotes: a.downvotes || 0,
+      myVote: a.myVote || null,
     };
   },
 );
 
-export const PostAnswer = createAsyncThunk(
-  "questions/addAnswer",
-  async (answerData: any) => {
-    console.log("add answer in slice:", answerData);
-    const response = await axios.post(`${API_BASE_URL}/answers`, answerData);
-    return response.data;
+// Update an existing answer
+export const updateAnswer = createAsyncThunk(
+  "answer/updateAnswer",
+  async (data: { answerId: number; userId: string; answer: string }) => {
+    const response = await axios.patch(
+      `${API_BASE_URL}/answers/${data.answerId}`,
+      data,
+    );
+    const a = response.data;
+    return {
+      ...a,
+      upvotes: a.upvotes || 0,
+      downvotes: a.downvotes || 0,
+      myVote: a.myVote || null,
+    };
   },
 );
 
@@ -82,58 +87,95 @@ const answerSlice = createSlice({
   reducers: {
     resetAnswers: (state) => {
       state.answers = [];
-      //   state.page = 1;
-      //   state.total = 0;
       state.error = null;
     },
+    // resetCurrentQuestion: (state) => {
+    //   state.question = null;
+    // },
   },
   extraReducers: (builder) => {
     builder
-      //   .addCase(fetchQuestions.pending, (state) => {
-      //     state.loading = true;
-      //     state.error = null;
-      //   })
-      //   .addCase(
-      //     fetchQuestions.fulfilled,
-      //     (state, action: PayloadAction<any>) => {
-      //       state.loading = false;
-      //       state.questions = [...state.questions, ...action.payload.questions];
-      //       state.total = action.payload.total;
-      //       state.page = action.payload.page;
-      //       state.limit = action.payload.limit;
-      //     },
-      //   )
-      //   .addCase(fetchQuestions.rejected, (state, action) => {
-      //     state.loading = false;
-      //     state.error = action.error.message || "Failed to fetch questions";
-      //   })
+      // Post Answer
       .addCase(PostAnswer.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(PostAnswer.fulfilled, (state, action: PayloadAction<Answer>) => {
         state.loading = false;
-        state.answer = action.payload;
-        console.log(state.answer, "slice");
+        state.answers.push(action.payload);
       })
       .addCase(PostAnswer.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to post answer";
       })
+
+      // Fetch answers by question id
       .addCase(fetchAnswersByQusetionId.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(
         fetchAnswersByQusetionId.fulfilled,
-        (state, action: PayloadAction<any>) => {
+        (state, action: PayloadAction<Answer[]>) => {
           state.loading = false;
-          state.answers = [...state.answers, action.payload];
+          state.answers = action.payload;
         },
       )
       .addCase(fetchAnswersByQusetionId.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to add question";
+        state.error = action.error.message || "Failed to fetch answers";
+      })
+
+      // Update answer
+      .addCase(updateAnswer.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        updateAnswer.fulfilled,
+        (state, action: PayloadAction<Answer>) => {
+          state.loading = false;
+          const index = state.answers.findIndex(
+            (a) => a.id === action.payload.id,
+          );
+          if (index !== -1) state.answers[index] = action.payload;
+        },
+      )
+      .addCase(updateAnswer.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to update answer";
+      })
+
+      // Handle votes
+      .addCase(voteQuestionOrAnswer.fulfilled, (state, action) => {
+        const { entityType, entityId, voteType } = action.payload;
+
+        if (entityType === "answer") {
+          const aIndex = state.answers.findIndex((a) => a.id === entityId);
+          if (aIndex !== -1) {
+            const answer = state.answers[aIndex];
+
+            if (answer.myVote === voteType) {
+              // same vote clicked → remove it
+              if (voteType === "upvote")
+                answer.upvotes = Math.max(0, answer.upvotes - 1);
+              else answer.downvotes = Math.max(0, answer.downvotes - 1);
+              answer.myVote = null;
+            } else {
+              // opposite vote clicked → remove previous vote first
+              if (answer.myVote === "upvote")
+                answer.upvotes = Math.max(0, answer.upvotes - 1);
+              if (answer.myVote === "downvote")
+                answer.downvotes = Math.max(0, answer.downvotes - 1);
+
+              // then add new vote
+              if (voteType === "upvote") answer.upvotes += 1;
+              if (voteType === "downvote") answer.downvotes += 1;
+
+              answer.myVote = voteType;
+            }
+          }
+        }
       });
   },
 });

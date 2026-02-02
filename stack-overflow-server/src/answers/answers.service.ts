@@ -1,37 +1,147 @@
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
-
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateAnswerDto } from './dto/create-answer.dto';
+
 import { Answer } from './entities/answer.entity';
+import { CreateAnswerDto } from './dto/create-answer.dto';
+import { Vote } from '../votes/entities/vote.entity';
 
 @Injectable()
 export class AnswersService {
   constructor(
     @InjectRepository(Answer)
     private readonly ansRepository: Repository<Answer>,
+
+    @InjectRepository(Vote)
+    private readonly voteRepo: Repository<Vote>,
   ) {}
+
+  private async getAnswerVotes(answerId: number) {
+    const upvotes = await this.voteRepo.count({
+      where: {
+        entityType: 'answer',
+        entityId: answerId,
+        voteType: 'upvote',
+      },
+    });
+
+    const downvotes = await this.voteRepo.count({
+      where: {
+        entityType: 'answer',
+        entityId: answerId,
+        voteType: 'downvote',
+      },
+    });
+
+    return {
+      upvotes,
+      downvotes,
+      score: upvotes - downvotes,
+    };
+  }
+
   async PostAnswer(postDto: CreateAnswerDto) {
     const answer = this.ansRepository.create({
       questionId: Number(postDto.questionId),
       userId: postDto.userId,
       answer: postDto.answer,
     });
-    const res = await this.ansRepository.save(answer);
-    console.log(res);
-  }
 
-  async GetAnswer(id: number) {
-    const existsQuestion = await this.ansRepository.findOne({
-      where: { questionId: id },
+    const saved = await this.ansRepository.save(answer);
+
+    const fullAnswer = await this.ansRepository.findOne({
+      where: { id: saved.id },
+      relations: ['user'],
     });
-    if (!existsQuestion) {
-      throw new HttpException({ message: 'Question not found' }, 404);
+
+    if (!fullAnswer) {
+      throw new HttpException('Failed to create answer', 500);
     }
 
+    const votes = await this.getAnswerVotes(fullAnswer.id);
+
+    return {
+      id: fullAnswer.id,
+      answer: fullAnswer.answer,
+      createdAt: fullAnswer.createdAt,
+      updatedAt: fullAnswer.updatedAt,
+      questionId: fullAnswer.questionId,
+      userId: fullAnswer.userId,
+      username: fullAnswer.user.username,
+      upvotes: votes.upvotes,
+      downvotes: votes.downvotes,
+      score: votes.score,
+    };
+  }
+
+  async GetAnswer(questionId: number) {
     const answers = await this.ansRepository.find({
-      where: { questionId: id },
+      where: { questionId },
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
     });
-    return answers;
+
+    if (!answers.length) {
+      throw new HttpException({ message: 'Answers not found' }, 404);
+    }
+
+    return Promise.all(
+      answers.map(async (a) => {
+        const votes = await this.getAnswerVotes(a.id);
+
+        return {
+          id: a.id,
+          answer: a.answer,
+          createdAt: a.createdAt,
+          updatedAt: a.updatedAt,
+          questionId: a.questionId,
+          userId: a.userId,
+          username: a.user.username,
+          upvotes: votes.upvotes,
+          downvotes: votes.downvotes,
+          score: votes.score,
+        };
+      }),
+    );
+  }
+
+  async updateAnswer(payload: {
+    answerId: number;
+    userId: string;
+    answer: string;
+  }) {
+    const answer = await this.ansRepository.findOne({
+      where: { id: payload.answerId },
+      relations: ['user'],
+    });
+
+    if (!answer) {
+      throw new NotFoundException('Answer not found');
+    }
+
+    if (answer.userId !== payload.userId) {
+      throw new HttpException(
+        { message: 'You are not allowed to edit this answer' },
+        403,
+      );
+    }
+
+    answer.answer = payload.answer;
+
+    const saved = await this.ansRepository.save(answer);
+    const votes = await this.getAnswerVotes(saved.id);
+
+    return {
+      id: saved.id,
+      answer: saved.answer,
+      createdAt: saved.createdAt,
+      updatedAt: saved.updatedAt,
+      questionId: saved.questionId,
+      userId: saved.userId,
+      username: saved.user.username,
+      upvotes: votes.upvotes,
+      downvotes: votes.downvotes,
+      score: votes.score,
+    };
   }
 }

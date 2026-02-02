@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { registerUser } from "../../redux/auth/authenticateSlice";
 
@@ -16,7 +16,6 @@ import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import {
   TextField,
   Button,
-  Box,
   Typography,
   Link,
   Card,
@@ -31,6 +30,8 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import GoogleIcon from "@mui/icons-material/Google";
 import GitHubIcon from "@mui/icons-material/GitHub";
+
+import "./register.css";
 
 const RegistrationSchema = z
   .object({
@@ -61,6 +62,17 @@ function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  useEffect(() => {
+    if (currentUser) {
+      setOpenSnackbar(true);
+      const timer = setTimeout(() => {
+        router.push("/questions");
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser, router]);
+
   const {
     control,
     handleSubmit,
@@ -83,20 +95,11 @@ function Register() {
         email: data.email,
         username: data.username,
       };
-      console.log(userData, "userdata");
 
-      await dispatch(registerUser(userData));
+      dispatch(registerUser(userData));
 
       if (currentUser) {
-        const res = await createUserWithEmailAndPassword(
-          auth,
-          data.email,
-          data.password,
-        );
-        const user = res.user;
-        console.log(user, "response from register email firebase");
-        setOpenSnackbar(true);
-        setTimeout(() => router.push("/questions"), 1200);
+        await createUserWithEmailAndPassword(auth, data.email, data.password);
       }
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
@@ -114,194 +117,168 @@ function Register() {
     try {
       const res = await signInWithPopup(auth, provider);
       const user = res.user;
-      console.log(user, "social auth");
+
       const userData = {
         userid: user.uid,
         email: user.email,
         username: user.displayName,
       };
-      await dispatch(registerUser(userData));
-      console.log(currentUser);
-      if (currentUser) {
-        setOpenSnackbar(true);
-        setTimeout(() => router.push("/questions"), 1200);
-      }
-      // if (!currentUser) {
-      //   const user = firebase.auth().currentUser;
-      //   if (user) {
-      //     user
-      //       .delete()
-      //       .then(() => {
-      //         console.log("user deleted successfully");
-      //       })
-      //       .catch((error) => {
-      //         console.error("Social Auth Error:", error);
-      //       });
-      //   }
-      // }
+
+      dispatch(registerUser(userData));
     } catch (error) {
       console.error("Social Auth Error:", error);
     }
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        minHeight: "100vh",
-        width: "100vw",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "#f5f5f5",
-      }}
-    >
-      <Card
-        variant="outlined"
-        sx={{
-          p: 4,
-          width: "100%",
-          maxWidth: 350,
-          minHeight: 500,
-          display: "flex",
-          flexDirection: "column",
-          alignContent: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography variant="h5" mt={2}>
-          Connect With people
-        </Typography>
-
-        <Box
-          component="form"
-          onSubmit={handleSubmit(handleRegister)}
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        >
-          <Controller
-            name="username"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Username"
-                error={!!errors.username}
-                helperText={errors.username?.message}
-                fullWidth
-              />
-            )}
+    <div className="so-register-page">
+      <div className="so-register-container">
+        <div className="so-logo-area">
+          <img
+            className="so-logo"
+            src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Stack_Overflow_icon.svg"
+            alt="logo"
           />
+        </div>
 
-          <Controller
-            name="email"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Email"
-                error={!!errors.email}
-                helperText={errors.email?.message}
-                fullWidth
-              />
-            )}
-          />
-
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                error={!!errors.password}
-                helperText={errors.password?.message}
-                fullWidth
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword((s) => !s)}>
-                        {showPassword ? <Visibility /> : <VisibilityOff />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
-          />
-
-          <Controller
-            name="confirmpassword"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Confirm Password"
-                type={showConfirmPassword ? "text" : "password"}
-                error={!!errors.confirmpassword}
-                helperText={errors.confirmpassword?.message}
-                fullWidth
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowConfirmPassword((s) => !s)}
-                      >
-                        {showConfirmPassword ? (
-                          <Visibility />
-                        ) : (
-                          <VisibilityOff />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
-          />
-
-          <Button variant="contained" type="submit" fullWidth sx={{ mt: 1 }}>
-            Register
+        <div className="so-social-buttons">
+          <Button
+            fullWidth
+            variant="outlined"
+            className="so-google-btn"
+            startIcon={<GoogleIcon />}
+            onClick={() => handleSocialAuth(googleProvider)}
+          >
+            Sign up with Google
           </Button>
 
-          <Divider sx={{ my: 1 }}>OR</Divider>
+          <Button
+            fullWidth
+            variant="contained"
+            className="so-github-btn"
+            startIcon={<GitHubIcon />}
+            onClick={() => handleSocialAuth(githubProvider)}
+          >
+            Sign up with GitHub
+          </Button>
+        </div>
 
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <Button
-              variant="outlined"
-              fullWidth
-              startIcon={<GoogleIcon />}
-              onClick={() => handleSocialAuth(googleProvider)}
-            >
-              Continue with Google
-            </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              startIcon={<GitHubIcon />}
-              onClick={() => handleSocialAuth(githubProvider)}
-              sx={{ color: "#24292e", borderColor: "#24292e" }}
-            >
-              Continue with GitHub
-            </Button>
-          </Box>
-        </Box>
+        <Card className="so-register-card">
+          <form
+            onSubmit={handleSubmit(handleRegister)}
+            className="so-register-form"
+          >
+            <Controller
+              name="username"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Username"
+                  error={!!errors.username}
+                  helperText={errors.username?.message}
+                  fullWidth
+                />
+              )}
+            />
 
-        <Typography align="center" mt={3}>
-          Existing user?{" "}
-          <MuiLink component={Link} href="/auth/login">
-            Login
-          </MuiLink>
-        </Typography>
-      </Card>
+            <Controller
+              name="email"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Email"
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                  fullWidth
+                />
+              )}
+            />
+
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Password"
+                  type={showPassword ? "text" : "password"}
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
+                  fullWidth
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => setShowPassword((s) => !s)}>
+                          {showPassword ? <Visibility /> : <VisibilityOff />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
+            />
+
+            <Controller
+              name="confirmpassword"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Confirm Password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  error={!!errors.confirmpassword}
+                  helperText={errors.confirmpassword?.message}
+                  fullWidth
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowConfirmPassword((s) => !s)}
+                        >
+                          {showConfirmPassword ? (
+                            <Visibility />
+                          ) : (
+                            <VisibilityOff />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
+            />
+
+            <Button
+              variant="contained"
+              type="submit"
+              fullWidth
+              className="so-register-submit"
+            >
+              Sign up
+            </Button>
+
+            <Divider className="so-divider">OR</Divider>
+
+            <Typography className="so-footer-text">
+              Already have an account?{" "}
+              <MuiLink component={Link} href="/auth/login">
+                Log in
+              </MuiLink>
+            </Typography>
+          </form>
+        </Card>
+      </div>
 
       <Snackbar
         open={openSnackbar}
         autoHideDuration={2000}
         onClose={() => setOpenSnackbar(false)}
       >
-        <Alert severity="success">Success! Redirecting... 🎉</Alert>
+        <Alert severity="success">Success! Redirecting...</Alert>
       </Snackbar>
-    </Box>
+    </div>
   );
 }
 

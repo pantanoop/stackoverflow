@@ -8,6 +8,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TagsModule } from './tags/tags.module';
 import { QuestionsModule } from './questions/questions.module';
 import { AnswersModule } from './answers/answers.module';
+import { VotesModule } from './votes/votes.module';
+import { AnswerReplyModule } from './answer-reply/answer-reply.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { AnswersModule } from './answers/answers.module';
 
     QuestionsModule,
     AnswersModule,
+    VotesModule,
+    AnswerReplyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

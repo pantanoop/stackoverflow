@@ -3,6 +3,8 @@ import authReducer from "../redux/auth/authenticateSlice";
 import tagReducer from "../redux/tags/tagSlice";
 import questionReducer from "./questions/questionSlice";
 import answerReducer from "./answers/answerSlice";
+import replyReducer from "./replies/replyAnswer";
+// import voteReducer from "./votes/voteSlice";
 
 import {
   persistStore,
@@ -19,7 +21,7 @@ import storage from "redux-persist/lib/storage"; // defaults to localStorage for
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["authenticator", "questions"],
+  whitelist: ["authenticator"],
 };
 
 const persistedReducer = persistReducer(
@@ -29,6 +31,9 @@ const persistedReducer = persistReducer(
     tags: tagReducer,
     questions: questionReducer,
     ans: answerReducer,
+    replies: replyReducer,
+
+    // vote: voteReducer,
   }),
 );
 

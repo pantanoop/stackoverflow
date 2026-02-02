@@ -10,8 +10,7 @@ import {
   RichTextEditor,
   type RichTextEditorRef,
 } from "mui-tiptap";
-import { useRef } from "react";
-// import "./muitiptap.css";
+import { useEffect, useRef } from "react";
 
 interface TextEditorProps {
   value: string;
@@ -20,6 +19,15 @@ interface TextEditorProps {
 
 export default function TextEditor({ value, onChange }: TextEditorProps) {
   const rteRef = useRef<RichTextEditorRef>(null);
+
+  useEffect(() => {
+    const editor = rteRef.current?.editor;
+    if (!editor) return;
+
+    if (value === "" && editor.getHTML() !== "<p></p>") {
+      editor.commands.setContent("");
+    }
+  }, [value]);
 
   return (
     <RichTextEditor
@@ -32,13 +40,11 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
         onChange(html);
       }}
       sx={{
-        backgroundColor: "fwhite",
-
         border: "1px solid #ccc",
         "& .MuiTiptap-RichTextField-content": {
           padding: "16px",
           margin: "20px",
-          hieght: "10vh",
+          minHeight: "10vh",
           fontFamily: "Roboto, sans-serif",
         },
       }}
