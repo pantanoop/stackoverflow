@@ -34,6 +34,7 @@ import {
 import { fetchQuestionById } from "@/app/redux/questions/questionSlice";
 import {
   fetchAnswersByQusetionId,
+  MarkValid,
   PostAnswer,
   resetAnswers,
   updateAnswer,
@@ -41,6 +42,8 @@ import {
 import { fetchReplies, postReply } from "../../redux/replies/replyAnswer";
 import TextEditor from "@/app/components/Editor/TextEditor";
 import { voteQuestionOrAnswer } from "../../redux/votes/voteSlice";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import DoneIcon from "@mui/icons-material/Done";
 
 import "./questionPage.css";
 
@@ -174,6 +177,11 @@ export default function QuestionPage() {
     );
   }
 
+  function handleMarkValid(id: any) {
+    console.log(id, "id in my questions page");
+    dispatch(MarkValid(id));
+  }
+
   return (
     <div className="so-main-wrapper">
       <AppBar position="static" className="so-navbar">
@@ -259,15 +267,21 @@ export default function QuestionPage() {
                 {" "}
                 <div className="so-content-column">
                   {currentUser?.userid === a.userId && (
-                    <IconButton
-                      className="so-edit-icon"
-                      onClick={() => {
-                        setEditingAnswerId(a.id);
-                        setEditedAnswer(a.answer);
-                      }}
-                    >
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
+                    <>
+                      <IconButton
+                        className="so-edit-icon"
+                        onClick={() => {
+                          setEditingAnswerId(a.id);
+                          setEditedAnswer(a.answer);
+                        }}
+                      >
+                        <EditOutlinedIcon fontSize="small" />
+                      </IconButton>
+
+                      {/* <IconButton >
+                        <DoneIcon fontSize="small" />
+                      </IconButton> */}
+                    </>
                   )}
 
                   {editingAnswerId === a.id ? (
@@ -296,6 +310,7 @@ export default function QuestionPage() {
                         >
                           Save
                         </Button>
+
                         <Button
                           size="small"
                           onClick={() => setEditingAnswerId(null)}
@@ -318,6 +333,11 @@ export default function QuestionPage() {
               </div>
 
               <Stack direction="row" spacing={1} mt={1}>
+                {a.isValid ? (
+                  <DoneAllIcon />
+                ) : (
+                  <DoneIcon onClick={() => handleMarkValid(a.id)} />
+                )}
                 <Button
                   size="small"
                   color={a.myVote === "upvote" ? "primary" : "default"}
@@ -332,6 +352,7 @@ export default function QuestionPage() {
                 >
                   <ThumbDownOutlinedIcon /> {a.downvotes || 0}
                 </Button>
+
                 <Button size="small" onClick={() => setOpenReplyEditor(a.id)}>
                   Reply
                 </Button>

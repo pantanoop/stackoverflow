@@ -35,6 +35,11 @@ export class Questions1769735534402 implements MigrationInterface {
             isNullable: false,
           },
           {
+            name: 'isBanned',
+            type: 'boolean',
+            default: false,
+          },
+          {
             name: 'userid',
             type: 'varchar',
             isNullable: false,

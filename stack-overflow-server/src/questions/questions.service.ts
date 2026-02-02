@@ -84,13 +84,14 @@ export class QuestionsService {
       type: saved.type,
       createdAt: saved.createdAt,
       userid: saved.userid,
+      isBanned: false,
     };
   }
 
   async findAll(limit = 10, page = 1) {
     console.log('find all questions hittted service');
     const [questions, total] = await this.questionRepository.findAndCount({
-      where: { type: 'public' },
+      where: { type: 'public', isBanned: false },
       relations: ['user', 'tags'],
       order: { createdAt: 'DESC' },
       take: limit,
@@ -113,6 +114,84 @@ export class QuestionsService {
           upvotes: votes.upvotes,
           downvotes: votes.downvotes,
           score: votes.score,
+          isBanned: false,
+        };
+      }),
+    );
+
+    return {
+      formattedQuestions: formattedQuestions,
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async findAllAdmin(limit = 10, page = 1) {
+    console.log('find all questions hittted service');
+    const [questions, total] = await this.questionRepository.findAndCount({
+      relations: ['user', 'tags'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    const formattedQuestions = await Promise.all(
+      questions.map(async (q) => {
+        const votes = await this.getVoteCount(q.id);
+
+        return {
+          id: q.id,
+          title: q.title,
+          description: q.description,
+          tags: q.tags.map((t) => t.tagName),
+          type: q.type,
+          createdAt: q.createdAt,
+          userid: q.userid,
+          username: q.user?.username,
+          upvotes: votes.upvotes,
+          downvotes: votes.downvotes,
+          score: votes.score,
+          isBanned: false,
+        };
+      }),
+    );
+
+    return {
+      formattedQuestions: formattedQuestions,
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async findAllDraft(id: string, limit = 10, page = 1) {
+    console.log('find all draft questions hittted service');
+    const [questions, total] = await this.questionRepository.findAndCount({
+      where: { type: 'draft', userid: id, isBanned: false },
+      relations: ['user', 'tags'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    const formattedQuestions = await Promise.all(
+      questions.map(async (q) => {
+        const votes = await this.getVoteCount(q.id);
+
+        return {
+          id: q.id,
+          title: q.title,
+          description: q.description,
+          tags: q.tags.map((t) => t.tagName),
+          type: q.type,
+          createdAt: q.createdAt,
+          userid: q.userid,
+          username: q.user?.username,
+          upvotes: votes.upvotes,
+          downvotes: votes.downvotes,
+          score: votes.score,
+          isBanned: false,
         };
       }),
     );
@@ -128,7 +207,7 @@ export class QuestionsService {
   async findQuestion(id: number) {
     console.log('hitted service', id);
     const question = await this.questionRepository.findOne({
-      where: { id },
+      where: { id, isBanned: false },
       relations: ['user', 'tags'],
     });
 
@@ -153,6 +232,7 @@ export class QuestionsService {
       upvotes: votes.upvotes,
       downvotes: votes.downvotes,
       score: votes.score,
+      isBanned: false,
     };
   }
 
@@ -208,6 +288,77 @@ export class QuestionsService {
       type: saved.type,
       createdAt: saved.createdAt,
       userid: saved.userid,
+      isBanned: false,
     };
+  }
+
+  async PostPublicDraft(id: number) {
+    console.log('draft service hitted');
+    const question = await this.questionRepository.findOne({
+      where: { id: id },
+      relations: ['tags'],
+    });
+
+    if (!question) {
+      throw new HttpException({ message: 'Question not found' }, 404);
+    }
+    // let updateData = question.type :"public"
+    // Object.assign(question, updateData);
+    await this.questionRepository.update(id, { type: 'public' });
+    const questionSaved = await this.questionRepository.find({
+      where: { id: id },
+    });
+    console.log(questionSaved, 'gsgsg');
+    // const saved = await this.questionRepository.save(questionSaved);
+    // console.log(saved, 'draft');
+    // console.log(question.id, question.title, question.description, 'draft');
+    return {
+      id: question.id,
+      title: question.title,
+      description: question.description,
+      tags: question.tags.map((t) => t.tagName),
+      type: question.type,
+      createdAt: question.createdAt,
+      userid: question.userid,
+      isBanned: false,
+    };
+  }
+
+  // async banProduct(id: number) {
+  //   const question = await this.questionRepository.findOne({
+  //     where: { id: id },
+  //   });
+  //   if (!question) {
+  //     throw new HttpException('Product not found', 404);
+  //   }
+  //   const updatedQuestion = {
+  //     ...question,
+  //     isBanned: !question.isBanned,
+  //   };
+  //   // console.log(updatedProduct);
+  //   await this.questionRepository.save(updatedQuestion);
+  //   return updatedQuestion;
+  // }
+
+  async toggleBanQuestion(id: number) {
+    console.log('hitted service', id);
+    const question = await this.questionRepository.findOne({
+      where: { id: id },
+    });
+    if (!question) {
+      throw new HttpException('Product not found', 404);
+    }
+
+    // if (user.role === 'admin') {
+    //   throw new HttpException(
+    //     { message: 'Admin users cannot be banned or unbanned' },
+    //     403,
+    //   );
+    // }
+
+    question.isBanned = !question.isBanned;
+    // await this.questionRepository.save(question);
+
+    return await this.questionRepository.save(question);
   }
 }

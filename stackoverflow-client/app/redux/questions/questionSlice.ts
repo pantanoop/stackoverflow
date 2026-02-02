@@ -11,6 +11,7 @@ export interface Question {
   tags: string[];
   type: "draft" | "public";
   userid: string;
+  isBanned?: boolean;
   username: string;
   createdAt: string;
   upvotes: number;
@@ -38,7 +39,6 @@ const initialState: QuestionsState = {
   error: null,
 };
 
-// Fetch questions with pagination
 export const fetchQuestions = createAsyncThunk(
   "questions/fetchQuestions",
   async ({ limit, page }: { limit: number; page: number }) => {
@@ -63,11 +63,56 @@ export const fetchQuestions = createAsyncThunk(
   },
 );
 
-// Fetch single question by ID
+export const fetchQuestionsAdmin = createAsyncThunk(
+  "questions/fetchQuestionsAdmin",
+  async ({ limit, page }: { limit: number; page: number }) => {
+    const response = await axios.get(
+      `${API_BASE_URL}/questions/admin?limit=${limit}&page=${page}`,
+    );
+
+    const data = response.data || {};
+    return {
+      questions: Array.isArray(data.formattedQuestions)
+        ? data.formattedQuestions.map((q: any) => ({
+            ...q,
+            upvotes: q.upvotes || 0,
+            downvotes: q.downvotes || 0,
+            myVote: q.myVote || null,
+          }))
+        : [],
+      total: data.total || 0,
+      page: data.page || 1,
+      limit: data.limit || limit,
+    };
+  },
+);
+
+export const fetchQuestionsDraft = createAsyncThunk(
+  "questions/fetchQuestionsDraft",
+  async (id: string | undefined) => {
+    const response = await axios.get(`${API_BASE_URL}/questions/draft/${id}`);
+
+    const data = response.data || {};
+    return {
+      questions: Array.isArray(data.formattedQuestions)
+        ? data.formattedQuestions.map((q: any) => ({
+            ...q,
+            upvotes: q.upvotes || 0,
+            downvotes: q.downvotes || 0,
+            myVote: q.myVote || null,
+          }))
+        : [],
+      total: data.total || 0,
+      page: data.page || 1,
+      limit: data.limit || 10,
+    };
+  },
+);
+
 export const fetchQuestionById = createAsyncThunk(
   "questions/fetchQuestionById",
   async ({ id }: { id: number }) => {
-    console.log(id, "slice");
+    // console.log(id, "slice");
     const response = await axios.get(`${API_BASE_URL}/questions/${id}`);
     const q = response.data || {};
     return {
@@ -81,7 +126,23 @@ export const fetchQuestionById = createAsyncThunk(
   },
 );
 
-// Add a new question
+export const toggleQuestionBan = createAsyncThunk(
+  "questions/ban",
+  async (id: number) => {
+    // console.log(id, "slice");
+    const response = await axios.patch(`${API_BASE_URL}/questions/${id}/ban`);
+    const q = response.data || {};
+    return {
+      question: {
+        ...q,
+        upvotes: q.upvotes || 0,
+        downvotes: q.downvotes || 0,
+        myVote: q.myVote || null,
+      },
+    };
+  },
+);
+
 export const addQuestion = createAsyncThunk(
   "questions/addQuestion",
   async (questionData: any) => {
@@ -113,6 +174,22 @@ export const updateQuestion = createAsyncThunk(
     const response = await axios.patch(
       `${API_BASE_URL}/questions/${questionData.questionId}`,
       questionData,
+    );
+    const q = response.data;
+    return {
+      ...q,
+      upvotes: q.upvotes || 0,
+      downvotes: q.downvotes || 0,
+      myVote: q.myVote || null,
+    };
+  },
+);
+
+export const PostDaftPublic = createAsyncThunk(
+  "questions/updateQuestionPublic",
+  async (id: number) => {
+    const response = await axios.patch(
+      `${API_BASE_URL}/questions/markPublic/${id}`,
     );
     const q = response.data;
     return {
@@ -159,8 +236,44 @@ const questionsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || "Failed to fetch questions";
       })
+      .addCase(fetchQuestionsAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        fetchQuestionsAdmin.fulfilled,
+        (state, action: PayloadAction<any>) => {
+          state.loading = false;
+          state.questions = action.payload.questions;
+          state.total = action.payload.total;
+          state.page = action.payload.page;
+          state.limit = action.payload.limit;
+        },
+      )
+      .addCase(fetchQuestionsAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch questions";
+      })
 
-      // Add Question
+      .addCase(fetchQuestionsDraft.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        fetchQuestionsDraft.fulfilled,
+        (state, action: PayloadAction<any>) => {
+          state.loading = false;
+          state.questions = action.payload.questions;
+          state.total = action.payload.total;
+          state.page = action.payload.page;
+          state.limit = action.payload.limit;
+        },
+      )
+      .addCase(fetchQuestionsDraft.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch questions";
+      })
+
       .addCase(addQuestion.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -177,6 +290,16 @@ const questionsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || "Failed to add question";
       })
+      .addCase(toggleQuestionBan.fulfilled, (state, action) => {
+        console.log(action.payload);
+        const updated = action.payload;
+
+        const index = state.questions.findIndex((q) => q.id === updated?.id);
+
+        if (index !== -1) {
+          state.questions[index].isBanned = updated.isBanned;
+        }
+      })
 
       // Fetch single question
       .addCase(fetchQuestionById.pending, (state) => {
@@ -185,12 +308,32 @@ const questionsSlice = createSlice({
       })
       .addCase(fetchQuestionById.fulfilled, (state, action) => {
         state.loading = false;
-        console.log(action.payload);
+        // console.log(action.payload);
         state.question = action.payload.question;
       })
       .addCase(fetchQuestionById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch question";
+      })
+      .addCase(PostDaftPublic.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        PostDaftPublic.fulfilled,
+        (state, action: PayloadAction<Question>) => {
+          state.loading = false;
+          state.question = action.payload;
+
+          const index = state.questions.findIndex(
+            (q) => q.id === action.payload.id,
+          );
+          if (index !== -1) state.questions[index] = action.payload;
+        },
+      )
+      .addCase(PostDaftPublic.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to update question";
       })
 
       // Update Question

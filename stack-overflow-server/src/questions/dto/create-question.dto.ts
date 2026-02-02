@@ -5,6 +5,7 @@ import {
   IsOptional,
   MinLength,
   MaxLength,
+  IsBoolean,
 } from 'class-validator';
 
 export class CreateQuestionDto {
@@ -24,6 +25,10 @@ export class CreateQuestionDto {
 
   @IsEnum(['draft', 'public'])
   type: 'draft' | 'public';
+
+  @IsBoolean()
+  @IsOptional()
+  isBanned: boolean;
 
   @IsString()
   userid: string;

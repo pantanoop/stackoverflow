@@ -16,7 +16,7 @@ export const voteQuestionOrAnswer = createAsyncThunk(
     entityId: number;
     voteType: "upvote" | "downvote";
   }) => {
-    console.log("Voting hit slice:", userId, entityId, entityType, voteType);
+    // console.log("Voting hit slice:", userId, entityId, entityType, voteType);
 
     const response = await axios.post(`${API_BASE_URL}/votes`, {
       userId,
@@ -25,7 +25,6 @@ export const voteQuestionOrAnswer = createAsyncThunk(
       voteType,
     });
 
-    // return entity info along with updated vote status
     return {
       entityType,
       entityId,

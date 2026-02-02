@@ -20,7 +20,7 @@ export class AnswerReplyService {
     return this.repo.find({
       where: { answerId },
       relations: ['childReplies', 'childReplies.childReplies'],
-      order: { createdAt: 'ASC' },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -28,7 +28,7 @@ export class AnswerReplyService {
     return this.repo.find({
       where: { parentReplyId },
       relations: ['childReplies'],
-      order: { createdAt: 'ASC' },
+      order: { createdAt: 'DESC' },
     });
   }
 }

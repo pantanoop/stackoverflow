@@ -89,7 +89,7 @@ export default function EditQuestion() {
       }),
     );
     setOpenSnackbar(true);
-    setTimeout(() => router.push(`/questions/${questionId}`), 1200);
+    setTimeout(() => router.push(`/questions`), 1200);
   };
 
   if (loading) {

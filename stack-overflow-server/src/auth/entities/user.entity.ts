@@ -23,6 +23,9 @@ export class User {
   @Column({ unique: true, nullable: true })
   username: string;
 
+  @Column()
+  isBanned: boolean;
+
   @OneToMany(() => Answer, (answer) => answer.user)
   answers: Answer[];
 

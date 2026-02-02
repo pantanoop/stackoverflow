@@ -12,6 +12,7 @@ export interface Answer {
   username: string;
   createdAt: string;
   updatedAt: string;
+  isValid: boolean;
   upvotes: number;
   downvotes: number;
   myVote: "upvote" | "downvote" | null;
@@ -80,6 +81,21 @@ export const updateAnswer = createAsyncThunk(
     };
   },
 );
+export const MarkValid = createAsyncThunk(
+  "answer/MarkValid",
+  async (id: number) => {
+    const response = await axios.patch(
+      `${API_BASE_URL}/answers/markValid/${id}`,
+    );
+    const a = response.data;
+    return {
+      ...a,
+      upvotes: a.upvotes || 0,
+      downvotes: a.downvotes || 0,
+      myVote: a.myVote || null,
+    };
+  },
+);
 
 const answerSlice = createSlice({
   name: "answers",
@@ -126,7 +142,7 @@ const answerSlice = createSlice({
         state.error = action.error.message || "Failed to fetch answers";
       })
 
-      // Update answer
+     
       .addCase(updateAnswer.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -145,8 +161,23 @@ const answerSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || "Failed to update answer";
       })
+      .addCase(MarkValid.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(MarkValid.fulfilled, (state, action: PayloadAction<Answer>) => {
+        state.loading = false;
+        // (console.log(action.payload), "mark valid slice");
+        const index = state.answers.findIndex(
+          (a) => a.id === action.payload.id,
+        );
+        if (index !== -1) state.answers[index] = action.payload;
+      })
+      .addCase(MarkValid.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to update answer";
+      })
 
-      // Handle votes
       .addCase(voteQuestionOrAnswer.fulfilled, (state, action) => {
         const { entityType, entityId, voteType } = action.payload;
 
@@ -156,19 +187,17 @@ const answerSlice = createSlice({
             const answer = state.answers[aIndex];
 
             if (answer.myVote === voteType) {
-              // same vote clicked → remove it
+              
               if (voteType === "upvote")
                 answer.upvotes = Math.max(0, answer.upvotes - 1);
               else answer.downvotes = Math.max(0, answer.downvotes - 1);
               answer.myVote = null;
             } else {
-              // opposite vote clicked → remove previous vote first
+            
               if (answer.myVote === "upvote")
                 answer.upvotes = Math.max(0, answer.upvotes - 1);
               if (answer.myVote === "downvote")
                 answer.downvotes = Math.max(0, answer.downvotes - 1);
-
-              // then add new vote
               if (voteType === "upvote") answer.upvotes += 1;
               if (voteType === "downvote") answer.downvotes += 1;
 

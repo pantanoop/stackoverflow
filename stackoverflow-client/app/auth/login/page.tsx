@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Link as MuiLink } from "@mui/material";
 import {
   addCurrentUser,
+  loginUser,
+  logout,
   socialLogin,
 } from "@/app/redux/auth/authenticateSlice";
 
@@ -49,16 +51,20 @@ function Login() {
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const { currentUser } = useAppSelector((state) => state.authenticator);
+  const { currentUser, error } = useAppSelector((state) => state.authenticator);
 
   useEffect(() => {
-    if (currentUser) {
+    // dispatch(logout());
+    if (currentUser && !error) {
       setOpenSnackbar(true);
       const timer = setTimeout(() => {
         router.push("/questions");
       }, 1000);
 
       return () => clearTimeout(timer);
+    }
+    if(error){
+
     }
   }, [currentUser, router]);
 
@@ -89,8 +95,7 @@ function Login() {
         email: user.email,
         username: user.displayName,
       };
-
-      dispatch(addCurrentUser(userData));
+      await dispatch(loginUser(userData));
     } catch (error: any) {
       handleAuthError(error);
     }
@@ -106,8 +111,8 @@ function Login() {
         email: user.email,
         username: user.displayName,
       };
-
-      dispatch(socialLogin(userData));
+      await dispatch(socialLogin(userData));
+      // if(error)
     } catch (error) {
       handleAuthError(error);
     }
@@ -229,7 +234,7 @@ function Login() {
       </div>
 
       <Snackbar open={openSnackbar} autoHideDuration={3000}>
-        <Alert severity="success">Logged in successfully!</Alert>
+        {<Alert severity="success">Logged in successfully!</Alert>}
       </Snackbar>
     </div>
   );

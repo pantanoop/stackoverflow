@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Answer } from './entities/answer.entity';
 import { CreateAnswerDto } from './dto/create-answer.dto';
 import { Vote } from '../votes/entities/vote.entity';
+import { User } from '../../src/auth/entities/user.entity';
 
 @Injectable()
 export class AnswersService {
@@ -52,6 +53,7 @@ export class AnswersService {
     const fullAnswer = await this.ansRepository.findOne({
       where: { id: saved.id },
       relations: ['user'],
+      order: { createdAt: 'DESC' },
     });
 
     if (!fullAnswer) {
@@ -96,7 +98,7 @@ export class AnswersService {
           updatedAt: a.updatedAt,
           questionId: a.questionId,
           userId: a.userId,
-          username: a.user.username,
+          username: a.user?.username || 'Anonymous',
           upvotes: votes.upvotes,
           downvotes: votes.downvotes,
           score: votes.score,
@@ -142,6 +144,27 @@ export class AnswersService {
       upvotes: votes.upvotes,
       downvotes: votes.downvotes,
       score: votes.score,
+    };
+  }
+
+
+  async MarkValidAnswer(id: number) {
+    const answer = await this.ansRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+
+    if (!answer) throw new NotFoundException('Answer not found');
+
+    answer.isValid = true;
+
+    const saved = await this.ansRepository.save(answer);
+
+    const votes = await this.getAnswerVotes(saved.id);
+    return {
+      ...saved,
+      username: saved.user.username,
+      ...votes,
     };
   }
 }

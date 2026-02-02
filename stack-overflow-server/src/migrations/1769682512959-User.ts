@@ -31,6 +31,11 @@ export class User1769682512959 implements MigrationInterface {
             isNullable: true,
           },
           {
+            name: 'isBanned',
+            type: 'boolean',
+            default: false,
+          },
+          {
             name: 'createdAt',
             type: 'timestamp',
             default: 'NOW()',

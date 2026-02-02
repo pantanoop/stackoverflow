@@ -26,4 +26,10 @@ export class AnswersController {
     console.log('dto hit', body);
     return this.answerService.updateAnswer(body);
   }
+
+  @Patch('/markValid/:id')
+  MarkValidAnswer(@Param('id') id: number) {
+    console.log('dto hit mark valid', id);
+    return this.answerService.MarkValidAnswer(id);
+  }
 }

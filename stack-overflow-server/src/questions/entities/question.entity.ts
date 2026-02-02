@@ -33,6 +33,9 @@ export class Question {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column()
+  isBanned: boolean;
+
   @ManyToOne(() => User, (user) => user.questions, { eager: true })
   @JoinColumn({ name: 'userid', referencedColumnName: 'userid' })
   user: User;

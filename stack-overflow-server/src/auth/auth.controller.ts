@@ -24,4 +24,19 @@ export class AuthController {
   signInWithGoogle(@Body() userGoogleDto: CreateAuthDto) {
     return this.authService.signInWithGoogle(userGoogleDto);
   }
+
+  @Get('users')
+  getUsers(@Query('page') page = 1, @Query('limit') limit = 5) {
+    return this.authService.getAllNonAdminUsers(Number(page), Number(limit));
+  }
+  @Post('/login')
+  loginUser(@Body() createAuthDto: CreateAuthDto) {
+    return this.authService.loginUser(createAuthDto);
+  }
+
+  @Patch('ban/:userid')
+  toggleBanUser(@Param('userid') userid: string) {
+    console.log(userid, 'hitted controler');
+    return this.authService.toggleBanUser(userid);
+  }
 }

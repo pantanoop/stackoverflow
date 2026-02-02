@@ -6,16 +6,18 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks/hooks";
 
 import {
   fetchQuestions,
+  fetchQuestionsAdmin,
   resetCurrentQuestion,
   resetQuestions,
-} from "../redux/questions/questionSlice";
-import { fetchTags } from "../redux/tags/tagSlice";
-import { voteQuestionOrAnswer } from "../redux/votes/voteSlice";
-import { logout } from "../redux/auth/authenticateSlice";
+  toggleQuestionBan,
+} from "../../redux/questions/questionSlice";
+import { fetchTags } from "../../redux/tags/tagSlice";
+import { voteQuestionOrAnswer } from "../../redux/votes/voteSlice";
+import { logout } from "../../redux/auth/authenticateSlice";
 
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
-import ThumbDownOutlinedIcon from "@mui/icons-material/ThumbDownOutlined";
+import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 
 import {
@@ -33,11 +35,12 @@ import {
   ListItemText,
   FormControl,
   InputLabel,
+  Switch,
 } from "@mui/material";
 
 import "./Questions.css";
 
-export default function Questions() {
+export default function AdminDashboard() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -49,20 +52,15 @@ export default function Questions() {
 
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [sortByNewest, setSortByNewest] = useState(false);
-  const [sortByScore, setSortByScore] = useState(false);
+  //   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  //   const [sortByNewest, setSortByNewest] = useState(false);
+  //   const [sortByScore, setSortByScore] = useState(false);
 
   useEffect(() => {
-    dispatch(resetCurrentQuestion());
-    dispatch(fetchQuestions({ limit: 10, page: 1 }));
+    dispatch(resetQuestions());
+    dispatch(fetchQuestionsAdmin({ limit: 10, page: 1 }));
     dispatch(fetchTags());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (page === 1) return;
-    dispatch(fetchQuestions({ limit: 10, page }));
-  }, [dispatch, page]);
 
   const handleScroll = useCallback(() => {
     const nearBottom =
@@ -78,43 +76,49 @@ export default function Questions() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  const filteredQuestions = useMemo(() => {
-    let list = questions.filter((q) =>
-      q.title.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+  async function handleToggleBan(id: number) {
+    await dispatch(toggleQuestionBan(id) as any);
+    await dispatch(fetchQuestionsAdmin({ limit: 10, page: 1 }));
+  }
 
-    if (selectedTags.length > 0) {
-      list = list.filter((q) =>
-        selectedTags.every((tag) => q.tags?.includes(tag)),
-      );
-    }
+  //   const filteredQuestions = useMemo(() => {
+  //     let list = questions.filter((q) =>
+  //       q.title.toLowerCase().includes(searchTerm.toLowerCase()),
+  //     );
 
-    if (sortByScore) {
-      list = [...list].sort(
-        (a, b) => b.upvotes - b.downvotes - (a.upvotes - a.downvotes),
-      );
-    } else if (sortByNewest) {
-      list = [...list].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-    }
+  //     if (selectedTags.length > 0) {
+  //       list = list.filter((q) =>
+  //         selectedTags.every((tag) => q.tags?.includes(tag)),
+  //       );
+  //     }
 
-    return list;
-  }, [questions, searchTerm, selectedTags, sortByNewest, sortByScore]);
+  //     if (sortByScore) {
+  //       list = [...list].sort(
+  //         (a, b) => b.upvotes - b.downvotes - (a.upvotes - a.downvotes),
+  //       );
+  //     } else if (sortByNewest) {
+  //       list = [...list].sort(
+  //         (a, b) =>
+  //           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  //       );
+  //     }
 
-  const handleVote = (voteType: "upvote" | "downvote", entityId: number) => {
-    if (!currentUser) return router.push("/auth/login");
+  //     return list;
+  //   }, [questions, searchTerm, selectedTags, sortByNewest, sortByScore]);
 
-    dispatch(
-      voteQuestionOrAnswer({
-        userId: currentUser.userid,
-        entityType: "question",
-        entityId,
-        voteType,
-      }),
-    );
-  };
+  //   const handleVote = (voteType: "upvote" | "downvote", entityId: number) => {
+  //     if (!currentUser) return router.push("/auth/login");
+
+  //     dispatch(
+  //       voteQuestionOrAnswer({
+  //         userId: currentUser.userid,
+  //         entityType: "question",
+  //         entityId,
+  //         voteType,
+  //       }),
+  //     );
+  //   };
+  // console.log(questions, "jehfjh");
 
   return (
     <div className="so-page">
@@ -126,7 +130,9 @@ export default function Questions() {
             alt="logo"
             onClick={() => router.push("/questions")}
           />
-          <span className="so-title">StackOverflow</span>
+          <span className="so-title" onClick={() => router.push("/questions")}>
+            StackOverflow
+          </span>
         </div>
 
         <div className="so-search">
@@ -199,41 +205,12 @@ export default function Questions() {
 
       <div className="so-main-layout">
         <aside className="so-sidebar">
-          <Typography className="so-sidebar-title">Filter</Typography>
-
-          <FormControl size="small" fullWidth>
-            <InputLabel>Tags</InputLabel>
-            <Select
-              multiple
-              value={selectedTags}
-              label="Tags"
-              renderValue={(selected) => selected.join(", ")}
-              onChange={(e) => setSelectedTags(e.target.value as string[])}
-            >
-              {tags.map((tag: any) => (
-                <MenuItem key={tag.id} value={tag.tagName}>
-                  <Checkbox checked={selectedTags.includes(tag.tagName)} />
-                  <ListItemText primary={tag.tagName} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <div className="so-sort-buttons">
-            <Button
-              variant={sortByNewest ? "contained" : "outlined"}
-              onClick={() => setSortByNewest((v) => !v)}
-            >
-              Newest
-            </Button>
-
-            <Button
-              variant={sortByScore ? "contained" : "outlined"}
-              onClick={() => setSortByScore((v) => !v)}
-            >
-              Highest Score
-            </Button>
-          </div>
+          <Button
+            variant={"contained"}
+            onClick={() => router.push("admin/userlist")}
+          >
+            User List
+          </Button>
         </aside>
 
         <main className="so-content">
@@ -241,7 +218,7 @@ export default function Questions() {
             All Questions
           </Typography>
 
-          {filteredQuestions.map((q) => (
+          {questions.map((q) => (
             <Card key={q.id} className="so-question-card">
               <div className="so-card-layout">
                 <div className="so-vote-section">
@@ -252,16 +229,6 @@ export default function Questions() {
                 </div>
 
                 <div className="so-question-main">
-                  {currentUser?.userid === q.userid && (
-                    <IconButton
-                      size="small"
-                      className="so-edit-btn"
-                      onClick={() => router.push(`/questions/edit/${q.id}`)}
-                    >
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  )}
-
                   <Typography
                     className="so-question-title"
                     onClick={() => router.push(`/questions/${q.id}`)}
@@ -290,20 +257,21 @@ export default function Questions() {
                   <div className="so-vote-buttons">
                     <Button
                       size="small"
-                      onClick={() => handleVote("upvote", q.id)}
+                      onClick={() => router.push(`/questions/edit/${q.id}`)}
                     >
-                      <ThumbUpOutlinedIcon /> {q.upvotes}
+                      <EditOutlinedIcon fontSize="small" />
                     </Button>
-
-                    <Button
-                      size="small"
-                      onClick={() => handleVote("downvote", q.id)}
-                    >
-                      <ThumbDownOutlinedIcon /> {q.downvotes}
+                    <Button size="small" onClick={() => handleToggleBan(q.id)}>
+                      <Typography variant="body2">
+                        {q.isBanned ? "Banned" : "Unbanned"}
+                      </Typography>
+                      <DeleteIcon
+                        sx={{ color: q.isBanned ? "Red" : "green" }}
+                      />
                     </Button>
                   </div>
 
-                  <Typography className="so-post-info">
+                  <Typography className="so-post-info" sx={{ mt: 4 }}>
                     asked by {q.username}
                   </Typography>
                 </div>
