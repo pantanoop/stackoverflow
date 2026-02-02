@@ -47,8 +47,23 @@ import DoneIcon from "@mui/icons-material/Done";
 
 import "./questionPage.css";
 
+const stripHtml = (html: string) => {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .trim();
+};
 const AnswerSchema = z.object({
-  answer: z.string().min(10).max(2000),
+  answer: z
+    .string()
+    .refine((val) => {
+      const plainText = stripHtml(val);
+      return plainText.length >= 10;
+    }, "Answer must contain at least 10 characters")
+    .refine((val) => {
+      const plainText = stripHtml(val);
+      return plainText.length <= 2000;
+    }, "Answer cannot exceed 2000 characters"),
 });
 
 type AnswerData = z.infer<typeof AnswerSchema>;
@@ -147,7 +162,10 @@ export default function QuestionPage() {
         <Typography variant="subtitle2" color="text.secondary">
           {r.username} • {new Date(r.createdAt).toLocaleString()}
         </Typography>
-        <Typography sx={{ mt: 0.5 }}>{r.text}</Typography>
+        <div
+          className="so-description"
+          dangerouslySetInnerHTML={{ __html: r.text }}
+        />
         <Button size="small" onClick={() => setOpenReplyEditor(r.id)}>
           Reply
         </Button>

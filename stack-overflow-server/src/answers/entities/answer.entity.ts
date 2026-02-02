@@ -11,6 +11,7 @@ import {
 import { User } from '../../auth/entities/user.entity';
 import { Question } from '../../questions/entities/question.entity';
 import { AnswerReply } from '../../answer-reply/entities/answer-reply.entity';
+import { Post } from '@nestjs/common';
 @Entity('answers')
 export class Answer {
   @PrimaryGeneratedColumn()
@@ -47,7 +48,7 @@ export class Answer {
   @OneToMany(() => AnswerReply, (reply) => reply.answer)
   replies: AnswerReply[];
 
-  //   @Column({ default: 0 })
+  //   @Column({ default: 0})
   //   upVote: number;
 
   //   @Column({ default: 0 })

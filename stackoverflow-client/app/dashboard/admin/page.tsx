@@ -47,7 +47,8 @@ export default function AdminDashboard() {
   const { questions, loading, limit } = useAppSelector(
     (state) => state.questions,
   );
-  const { tags } = useAppSelector((state) => state.tags);
+  console.log(questions, "in admin dashboard");
+  // const { tags } = useAppSelector((state) => state.tags);
   const { currentUser } = useAppSelector((state) => state.authenticator);
 
   const [page, setPage] = useState(1);
@@ -78,7 +79,7 @@ export default function AdminDashboard() {
 
   async function handleToggleBan(id: number) {
     await dispatch(toggleQuestionBan(id) as any);
-    await dispatch(fetchQuestionsAdmin({ limit: 10, page: 1 }));
+    // await dispatch(fetchQuestionsAdmin({ limit: 10, page: 1 }));
   }
 
   //   const filteredQuestions = useMemo(() => {

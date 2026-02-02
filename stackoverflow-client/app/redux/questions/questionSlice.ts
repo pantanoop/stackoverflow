@@ -244,8 +244,13 @@ const questionsSlice = createSlice({
         fetchQuestionsAdmin.fulfilled,
         (state, action: PayloadAction<any>) => {
           state.loading = false;
+          console.log(
+            action.payload.questions,
+            "the questions comming from backend",
+          );
           state.questions = action.payload.questions;
           state.total = action.payload.total;
+          // console.log(state.questions, "questions in slice");
           state.page = action.payload.page;
           state.limit = action.payload.limit;
         },
@@ -292,9 +297,10 @@ const questionsSlice = createSlice({
       })
       .addCase(toggleQuestionBan.fulfilled, (state, action) => {
         console.log(action.payload);
-        const updated = action.payload;
+        const updated = action.payload.question;
+        console.log(updated.isBanned, "toggle ban que");
 
-        const index = state.questions.findIndex((q) => q.id === updated?.id);
+        const index = state.questions.findIndex((q) => q.id === updated.id);
 
         if (index !== -1) {
           state.questions[index].isBanned = updated.isBanned;

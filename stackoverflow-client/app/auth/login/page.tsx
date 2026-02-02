@@ -52,19 +52,22 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const { currentUser, error } = useAppSelector((state) => state.authenticator);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success",
+  );
 
   useEffect(() => {
-    // dispatch(logout());
     if (currentUser && !error) {
+      setSnackbarMessage("Logged in successfully!");
+      setSnackbarSeverity("success");
       setOpenSnackbar(true);
+
       const timer = setTimeout(() => {
         router.push("/questions");
       }, 1000);
 
       return () => clearTimeout(timer);
-    }
-    if(error){
-
     }
   }, [currentUser, router]);
 
@@ -112,25 +115,31 @@ function Login() {
         username: user.displayName,
       };
       await dispatch(socialLogin(userData));
-      // if(error)
     } catch (error) {
       handleAuthError(error);
     }
   };
-
+  console.log(error);
   const handleAuthError = (error: any) => {
-    if (error.code === "auth/user-not-found") {
-      setError("email", { type: "manual", message: "Email not registered" });
-    } else if (error.code === "auth/wrong-password") {
-      setError("password", { type: "manual", message: "Incorrect password" });
-    } else if (error.code === "auth/account-exists-with-different-credential") {
-      setError("email", {
-        type: "manual",
-        message: "account-exists-with-different-credential",
-      });
-    } else {
-      setError("email", { type: "manual", message: "Login failed" });
+    let message = "Login failed";
+    if ((error = "User Banned Contact Admin")) {
+      message = "User Banned Contact Admin";
+      setError("email", { type: "manual", message });
     }
+    if (error.code === "auth/user-not-found") {
+      message = "Email not registered";
+      setError("email", { type: "manual", message });
+    } else if (error.code === "auth/wrong-password") {
+      message = "Incorrect password";
+      setError("password", { type: "manual", message });
+    } else if (error.code === "auth/account-exists-with-different-credential") {
+      message = "Account exists with different credential";
+      setError("email", { type: "manual", message });
+    }
+
+    setSnackbarMessage(message);
+    setSnackbarSeverity("error");
+    setOpenSnackbar(true);
   };
 
   return (
@@ -233,8 +242,17 @@ function Login() {
         </div>
       </div>
 
-      <Snackbar open={openSnackbar} autoHideDuration={3000}>
-        {<Alert severity="success">Logged in successfully!</Alert>}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenSnackbar(false)}
+      >
+        <Alert
+          severity={snackbarSeverity}
+          onClose={() => setOpenSnackbar(false)}
+        >
+          {snackbarMessage}
+        </Alert>
       </Snackbar>
     </div>
   );
